@@ -216,10 +216,6 @@ namespace octet {
 
       live_invaderers--;
       score++;
-
-	  invader_velocity *= 1.05;
-
-
       if (live_invaderers == 4) {
         invader_velocity *= 4;
       } else if (live_invaderers == 0) {
@@ -489,8 +485,6 @@ namespace octet {
         return;
       }
 
-	  move_camera();
-
       move_ship();
 
       fire_missiles();
@@ -513,11 +507,6 @@ namespace octet {
     // this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
       simulate();
-
-	  if (game_over && is_key_going_up(key_enter)) {
-		  app_init();
-		  return;
-	  }
 
       // set a viewport - includes whole window area
       glViewport(x, y, w, h);
