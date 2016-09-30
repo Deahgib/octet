@@ -31,6 +31,7 @@ namespace octet {
     // keys with ascii equivalent, eg. space, esc, enter have their ascii code.
     key_backspace = 8,
     key_tab = 9,
+	key_enter = 13,
     key_esc = 27,
     key_space = 32,
 

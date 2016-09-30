@@ -216,8 +216,10 @@ namespace octet {
 
       live_invaderers--;
       score++;
+
+	  invader_velocity *= 1.06f;
       if (live_invaderers == 4) {
-        invader_velocity *= 4;
+        invader_velocity *= 2;
       } else if (live_invaderers == 0) {
         game_over = true;
         sprites[game_over_sprite].translate(-20, 0);
@@ -507,6 +509,10 @@ namespace octet {
     // this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
       simulate();
+
+	  if (game_over && is_key_going_up(key_enter)) {
+		  app_init();
+	  }
 
       // set a viewport - includes whole window area
       glViewport(x, y, w, h);
