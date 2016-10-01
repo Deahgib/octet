@@ -29,7 +29,11 @@ namespace octet { namespace shaders {
 
         uniform mat4 modelToProjection;
 
-        void main() { gl_Position = modelToProjection * pos; uv_ = uv; }
+        void main() { 
+			gl_Position = modelToProjection * pos; 
+			uv_ = uv; 
+			
+		}
       );
 
       // this is the fragment shader
@@ -39,9 +43,11 @@ namespace octet { namespace shaders {
       const char fragment_shader[] = SHADER_STR(
         varying vec2 uv_;
         uniform sampler2D sampler;
-        void main() { gl_FragColor = texture2D(sampler, uv_); }
+        void main() { 
+			gl_FragColor = vec4(1,0,0,1);
+		}
       );
-    
+		//gl_FragColor = texture2D(sampler, uv_);
       // use the common shader code to compile and link the shaders
       // the result is a shader program
       shader::init(vertex_shader, fragment_shader);
