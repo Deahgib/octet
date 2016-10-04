@@ -63,7 +63,7 @@ namespace octet {
       // use "old skool" rendering
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      shader.render(modelToProjection, 0);
+      shader.render(modelToProjection, 0, 0, 1, 0, 1);
 
       // this is an array of the positions of the corners of the sprite in 3D
       // a straight "float" here means this array is being generated here at runtime.
@@ -173,7 +173,6 @@ namespace octet {
       num_sprites,
 
     };
-
     // timers for missiles and bombs
     int missiles_disabled;
     int bombs_disabled;
@@ -402,7 +401,7 @@ namespace octet {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, font_texture);
 
-      shader.render(modelToProjection, 0);
+      shader.render(modelToProjection, 0, 0, 1, 0, 1);
 
       glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x );
       glEnableVertexAttribArray(attribute_pos);
