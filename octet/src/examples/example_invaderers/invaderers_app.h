@@ -18,6 +18,37 @@
 //
 
 namespace octet {
+	int hue;
+	vec3 get_next_colour() {
+		// C = V x S  (= 1f)
+		// X = C x ( 1 - abs( (H/60) % 2  - 1 ) )
+		// m = V - C
+		++hue;
+		if (hue > 359) hue = 0;
+
+
+		float X = float(1 - (int)math::abs( (float)(hue) / 60) % 2 - 1);
+
+
+		if (hue >= 0 && hue < 60) {
+			return vec3(1, X, 0);
+		}
+		else if (hue >= 60 && hue < 120) {
+			return vec3(X, 1, 0);
+		}
+		else if (hue >= 120 && hue < 180) {
+			return vec3(0, 1, X);
+		}
+		else if (hue >= 180 && hue < 240) {
+			return vec3(0, X, 1);
+		}
+		else if (hue >= 240 && hue < 300) {
+			return vec3(X, 1, 0);
+		}
+		else if (hue >= 300 && hue < 360) {
+			return vec3(1, 0, X);
+		}
+	}
   class sprite {
     // where is our sprite (overkill for a 2D game!)
     mat4t modelToWorld;
@@ -63,7 +94,9 @@ namespace octet {
       // use "old skool" rendering
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      shader.render(modelToProjection, 0, 0, 1, 0, 1);
+
+	  float* colour = get_next_colour().get();
+      shader.render(modelToProjection, 0, colour[0], colour[1], colour[2], 1);
 
       // this is an array of the positions of the corners of the sprite in 3D
       // a straight "float" here means this array is being generated here at runtime.
@@ -401,7 +434,9 @@ namespace octet {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, font_texture);
 
-      shader.render(modelToProjection, 0, 0, 1, 0, 1);
+
+	  float* colour = get_next_colour().get();
+      shader.render(modelToProjection, 0, colour[0], colour[1], colour[2], 1);
 
       glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x );
       glEnableVertexAttribArray(attribute_pos);
@@ -431,7 +466,8 @@ namespace octet {
 		you_win = false;
 		score = 0;
 		score_multiplier = 1;
-    }
+		hue = 0;
+	}
 
 	void load_game_assets() {
 		// set up the shader
@@ -506,6 +542,8 @@ namespace octet {
 		you_win = false;
 		++score_multiplier;
 	}
+
+
 
     // called every frame to move things
     void simulate() {
