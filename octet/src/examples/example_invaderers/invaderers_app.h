@@ -551,6 +551,8 @@ namespace octet {
         return;
       }
 
+	  
+
       move_ship();
 
       fire_missiles();
