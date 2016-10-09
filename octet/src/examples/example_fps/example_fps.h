@@ -65,7 +65,7 @@ namespace octet {
 
       app_scene->add_shape(
         mat,
-        new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(100, 1, 100), source),
+        new mesh_terrain(vec3(10.0f, 0.5f, 100.0f), ivec3(100, 1, 100), source),
         new material(new image("assets/grass.jpg")),
         false, 0
       );
@@ -75,7 +75,7 @@ namespace octet {
       float player_mass = 90.0f;
 
       mat.loadIdentity();
-      mat.translate(0, player_height*0.5f, -50);
+      mat.translate(0, player_height*0.5f+100, -50);
 
       mesh_instance *mi = app_scene->add_shape(
         mat,

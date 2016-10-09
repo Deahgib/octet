@@ -27,7 +27,7 @@ namespace octet {
 		if (hue > 359) hue = 0;
 
 
-		float X = float(1 - (int)math::abs( (float)(hue) / 60) % 2 - 1);
+		float X = (float)(1 - math::abs(  hue / 60 % 2 - 1  ));
 
 
 		if (hue >= 0 && hue < 60) {
@@ -588,7 +588,7 @@ namespace octet {
       glViewport(x, y, w, h);
 
       // clear the background to black
-      glClearColor(0, 0, 0, 1);
+      glClearColor(0.9f, 0.44f, 0.48f, 1);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       // don't allow Z buffer depth testing (closer objects are always drawn in front of far ones)

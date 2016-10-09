@@ -27,13 +27,15 @@ namespace octet {
       material *green = new material(vec4(0, 1, 0, 1));
       material *blue = new material(vec4(0, 0, 1, 1));
 
+	  material *glass = new material(vec4(0.2, 0.2, 0.8, 0.4));
+
       mat4t mat;
       mat.translate(-3, 6, 0);
       app_scene->add_shape(mat, new mesh_sphere(vec3(2, 2, 2), 2), red, true);
 
       mat.loadIdentity();
       mat.translate(0, 10, 0);
-      app_scene->add_shape(mat, new mesh_box(vec3(2, 2, 2)), red, true);
+      app_scene->add_shape(mat, new mesh_box(vec3(2, 2, 2)), glass, true);
 
       mat.loadIdentity();
       mat.translate( 3, 6, 0);

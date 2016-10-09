@@ -29,7 +29,6 @@ namespace octet {
       atom_t atom_num_spots = app_utils::get_atom("num_spots");
       float val = 4;
       num_spots = custom_mat->add_uniform(&val, atom_num_spots, GL_FLOAT, 1, param::stage_fragment);
-
       mesh_box *box = new mesh_box(vec3(4));
       scene_node *node = new scene_node();
       app_scene->add_child(node);
