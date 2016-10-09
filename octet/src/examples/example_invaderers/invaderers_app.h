@@ -28,6 +28,8 @@ namespace octet {
     // half the height of the sprite
     float halfHeight;
 
+    float rot_angle;
+
     // what texture is on our sprite
     int texture;
 
@@ -42,6 +44,7 @@ namespace octet {
     void init(int _texture, float x, float y, float w, float h) {
       modelToWorld.loadIdentity();
       modelToWorld.translate(x, y, 0);
+      rot_angle = 0;
       halfWidth = w * 0.5f;
       halfHeight = h * 0.5f;
       texture = _texture;
@@ -101,6 +104,20 @@ namespace octet {
     // move the object
     void translate(float x, float y) {
       modelToWorld.translate(x, y, 0);
+    }
+
+    void rotate(float angle) {
+      rot_angle += angle;
+      modelToWorld.rotateZ(angle);
+    }
+
+    void set_rotation(float angle) {
+      rotate(angle - rot_angle);
+    }
+
+    void get_position(float &x, float &y) {
+      x = modelToWorld.get()[0];
+      y = modelToWorld.get()[1];
     }
 
     // position the object relative to another.
@@ -177,6 +194,8 @@ namespace octet {
     int missiles_disabled;
     int bombs_disabled;
 
+    int mouse_x, mouse_y;
+
     // accounting for bad guys
     int live_invaderers;
     int num_lives;
@@ -244,12 +263,12 @@ namespace octet {
     void move_ship() {
       const float ship_speed = 0.05f;
       // left and right arrows
-      if (is_key_down(key_left)) {
+      if (is_key_down(key_left) || is_key_down(key_a)) {
         sprites[ship_sprite].translate(-ship_speed, 0);
         if (sprites[ship_sprite].collides_with(sprites[first_border_sprite+2])) {
           sprites[ship_sprite].translate(+ship_speed, 0);
         }
-      } else if (is_key_down(key_right)) {
+      } else if (is_key_down(key_right) || is_key_down(key_d)) {
         sprites[ship_sprite].translate(+ship_speed, 0);
         if (sprites[ship_sprite].collides_with(sprites[first_border_sprite+3])) {
           sprites[ship_sprite].translate(-ship_speed, 0);
@@ -261,7 +280,7 @@ namespace octet {
     void fire_missiles() {
       if (missiles_disabled) {
         --missiles_disabled;
-      } else if (is_key_going_down(' ')) {
+      } else if (is_key_going_down(' ') || is_key_going_down(key_lmb)) {
         // find a missile
         for (int i = 0; i != num_missiles; ++i) {
           if (!sprites[first_missile_sprite+i].is_enabled()) {
@@ -489,7 +508,11 @@ namespace octet {
         return;
       }
 
-	  move_camera();
+      app_common::get_mouse_pos(mouse_x, mouse_y);
+
+      float ship_x, ship_y;
+      sprites[ship_sprite].get_position(ship_x, ship_y);
+      printf("%d, %d\n", ship_x, ship_y);
 
       move_ship();
 
