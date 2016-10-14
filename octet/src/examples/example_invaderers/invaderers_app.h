@@ -126,6 +126,11 @@ namespace octet {
       y = (float) modelToProjection[3][1];
     }
 
+    void set_position(const float &x, const float &y) {
+      modelToWorld[3][0] = x;
+      modelToWorld[3][1] = y;
+    }
+
     // position the object relative to another.
     void set_relative(sprite &rhs, float x, float y) {
       modelToWorld = rhs.modelToWorld;
@@ -176,8 +181,13 @@ namespace octet {
       num_borders = 4,
       num_invaderers = num_rows * num_cols,
 
+
+      first_ground_sprite = 0,
+      last_ground_sprite = first_ground_sprite + 1,
+
       // sprite definitions
-      ship_sprite = 0,
+      ship_sprite,
+      gun_sprite,
       game_over_sprite,
 
       first_invaderer_sprite,
@@ -191,6 +201,7 @@ namespace octet {
 
       first_border_sprite,
       last_border_sprite = first_border_sprite + num_borders - 1,
+
 
       num_sprites,
 
@@ -261,8 +272,8 @@ namespace octet {
       alSourcePlay(source);
 
       if (--num_lives == 0) {
-        //game_over = true;
-        //sprites[game_over_sprite].translate(-20, 0);
+        game_over = true;
+        sprites[game_over_sprite].translate(-20, 0);
       }
     }
 
@@ -281,6 +292,10 @@ namespace octet {
           sprites[ship_sprite].translate(-ship_speed, 0);
         }
       }
+      float x, y;
+      sprites[ship_sprite].get_position(cameraToWorld, x, y);
+      sprites[gun_sprite].set_position(x, y+0.1f);
+
     }
 
     // fire button (space)
@@ -291,7 +306,7 @@ namespace octet {
         // find a missile
         for (int i = 0; i != num_missiles; ++i) {
           if (!sprites[first_missile_sprite+i].is_enabled()) {
-            sprites[first_missile_sprite+i].set_relative(sprites[ship_sprite], 0, 0.5f);
+            sprites[first_missile_sprite+i].set_relative(sprites[gun_sprite], 0, 0.5f);
             sprites[first_missile_sprite+i].is_enabled() = true;
             missiles_disabled = 5;
             ALuint source = get_sound_source();
@@ -351,6 +366,12 @@ namespace octet {
             }
           }
           if (missile.collides_with(sprites[first_border_sprite+1])) {
+            missile.is_enabled() = false;
+            missile.translate(20, 0);
+          }else if (missile.collides_with(sprites[first_border_sprite + 2])) {
+            missile.is_enabled() = false;
+            missile.translate(20, 0);
+          }else if (missile.collides_with(sprites[first_border_sprite + 3])) {
             missile.is_enabled() = false;
             missile.translate(20, 0);
           }
@@ -440,35 +461,26 @@ namespace octet {
     void do_shoot_angle() {
       app_common::get_mouse_pos(mouse_x, mouse_y);
       float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) / 2.0f)) / ((float)(screen_w) / 2.0f)) * 3;
-
       float mouse_coord_y = (((float)(mouse_y)-((float)(screen_h) / 2.0f)) / ((float)(screen_h) / 2.0f)) * -3;
 
       float ship_x, ship_y;
       sprites[ship_sprite].get_position(cameraToWorld, ship_x, ship_y);
-      //printf("Mouse %f, %f\n", mouse_coord_x, mouse_coord_y);
 
       float dx = ship_x - mouse_coord_x;
       float dy = ship_y - mouse_coord_y;
-      float angle = 0;
-      // If dx is positive then mouse is to the left ship is right
+      float angle = 0; // Stops the program from crashing
       if (dx >= 0 && dy < 0) {
         // TOA  tan = op / adj
         float radAngle = math::atan2(dx, -dy);
         angle = radAngle * 180.0f / 3.141592f;
-        printf("Angle %f\n", angle);
+        //printf("Angle %f\n", angle);
       }
       else if (dx < 0 && dy < 0) {
         float radAngle = math::atan2(-dx, -dy);
         angle = -1 * radAngle * 180.0f / 3.141592f;
-        printf("Angle %f\n", angle);
+        //printf("Angle %f\n", angle);
       }
-      sprites[ship_sprite].set_rotation(angle);
-      
-      // if dy is positive then mouse is above
-
-
-
-
+      sprites[gun_sprite].set_rotation(angle);
     }
 
   public:
@@ -491,6 +503,9 @@ namespace octet {
       GLuint ship = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/ship.gif");
       sprites[ship_sprite].init(ship, 0, -2.75f, 0.25f, 0.25f);
 
+      GLuint gun = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/gun.gif");
+      sprites[gun_sprite].init(gun, 0, -2.65f, 0.06f, 0.12f);
+
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
@@ -506,10 +521,14 @@ namespace octet {
 
       // set the border to white for clarity
       GLuint white = resource_dict::get_texture_handle(GL_RGB, "#ffffff");
-      sprites[first_border_sprite+0].init(white, 0, -3, 6, 0.2f);
-      sprites[first_border_sprite+1].init(white, 0,  3, 6, 0.2f);
-      sprites[first_border_sprite+2].init(white, -3, 0, 0.2f, 6);
-      sprites[first_border_sprite+3].init(white, 3,  0, 0.2f, 6);
+      sprites[first_border_sprite+0].init(white, 0, -3.2f, 6.4f, 0.2f);
+      sprites[first_border_sprite+1].init(white, 0,  3.2f, 6.4f, 0.2f);
+      sprites[first_border_sprite+2].init(white, -3.2f, 0, 0.2f, 6.4f);
+      sprites[first_border_sprite+3].init(white, 3.2f,  0, 0.2f, 6.4f);
+
+      GLint green = resource_dict::get_texture_handle(GL_RGB, "#a2fb25");
+      sprites[first_ground_sprite+0].init(green, 0, -3, 6, 0.4f);
+      sprites[first_ground_sprite+1].init(green, 6, -3, 6, 0.4f);
 
       // use the missile texture
       GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");

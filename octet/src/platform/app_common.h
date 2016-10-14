@@ -62,7 +62,7 @@ namespace octet {
     key_ctrl,
     key_alt,
 
-
+    key_r = 114,
 	key_w = 119,
 	key_a = 97,
 	key_s = 115,
