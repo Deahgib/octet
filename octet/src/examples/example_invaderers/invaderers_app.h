@@ -58,7 +58,7 @@ namespace octet {
 
     void render(texture_shader &shader, mat4t &cameraToWorld) {
       // invisible sprite... used for gameplay.
-      if (!texture) return;
+      if (!texture || !is_enabled()) return;
 
       // build a projection matrix: model -> world -> camera -> projection
       // the projection space is the cube -1 <= x/w, y/w, z/w <= 1
@@ -184,6 +184,7 @@ namespace octet {
 
       first_ground_sprite = 0,
       last_ground_sprite = first_ground_sprite + 1,
+      background_sprite_stopper, // used to scroll the background along.
 
       // sprite definitions
       ship_sprite,
@@ -202,6 +203,8 @@ namespace octet {
       first_border_sprite,
       last_border_sprite = first_border_sprite + num_borders - 1,
 
+      first_enemy_anchor,
+      last_enemy_anchor = first_enemy_anchor + num_rows - 1,
 
       num_sprites,
 
@@ -458,29 +461,43 @@ namespace octet {
       glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
     }
 
+	void move_background() {
+		sprites[first_ground_sprite].translate(-0.1f, 0);
+		sprites[last_ground_sprite].translate(-0.1f, 0);
+
+    if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_stopper])) {
+      sprites[first_ground_sprite].translate(12,0);
+    }else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_stopper])) {
+      sprites[last_ground_sprite].translate(12, 0);
+    }
+	}
+
     void do_shoot_angle() {
       app_common::get_mouse_pos(mouse_x, mouse_y);
-      float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) / 2.0f)) / ((float)(screen_w) / 2.0f)) * 3;
+      float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) / 2.0f)) / ((float)(screen_w) / 2.0f)) * 3; // Map the mouse coords on the screen with boundaries -3 to 3 for x and y
       float mouse_coord_y = (((float)(mouse_y)-((float)(screen_h) / 2.0f)) / ((float)(screen_h) / 2.0f)) * -3;
 
       float ship_x, ship_y;
       sprites[ship_sprite].get_position(cameraToWorld, ship_x, ship_y);
 
+      // Work out the angle between the gun and the cursor relative to the y axis
       float dx = ship_x - mouse_coord_x;
       float dy = ship_y - mouse_coord_y;
-      float angle = 0; // Stops the program from crashing
-      if (dx >= 0 && dy < 0) {
-        // TOA  tan = op / adj
+      // FIRST QUADRANT top left
+      if (dx >= 0 && dy < 0) { 
         float radAngle = math::atan2(dx, -dy);
-        angle = radAngle * 180.0f / 3.141592f;
+        float angle = radAngle * 180.0f / 3.141592f; // Convert rad angle to degrees
         //printf("Angle %f\n", angle);
+        sprites[gun_sprite].set_rotation(angle);
       }
-      else if (dx < 0 && dy < 0) {
+      // SECOND QUADRANT top right
+      else if (dx < 0 && dy < 0) { 
         float radAngle = math::atan2(-dx, -dy);
-        angle = -1 * radAngle * 180.0f / 3.141592f;
+        float angle = -1 * radAngle * 180.0f / 3.141592f; 
         //printf("Angle %f\n", angle);
+        sprites[gun_sprite].set_rotation(angle);
       }
-      sprites[gun_sprite].set_rotation(angle);
+      
     }
 
   public:
@@ -509,6 +526,7 @@ namespace octet {
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
+      /*
       GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
       for (int j = 0; j != num_rows; ++j) {
         for (int i = 0; i != num_cols; ++i) {
@@ -516,6 +534,15 @@ namespace octet {
           sprites[first_invaderer_sprite + i + j*num_cols].init(
             invaderer, ((float)i - num_cols * 0.5f) * 0.5f, 2.50f - ((float)j * 0.5f), 0.25f, 0.25f
           );
+        }
+      }*/
+
+      GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+      for (int j = 0; j != num_rows; ++j) {
+        for (int i = 0; i != num_cols; ++i) {
+          assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
+          sprites[first_invaderer_sprite + i + j*num_cols].init( invaderer, 0, 0, 0.45f, 0.25f);
+          sprites[first_invaderer_sprite + i + j*num_cols].is_enabled() = false;
         }
       }
 
@@ -528,7 +555,14 @@ namespace octet {
 
       GLint green = resource_dict::get_texture_handle(GL_RGB, "#a2fb25");
       sprites[first_ground_sprite+0].init(green, 0, -3, 6, 0.4f);
-      sprites[first_ground_sprite+1].init(green, 6, -3, 6, 0.4f);
+      GLint redish = resource_dict::get_texture_handle(GL_RGB, "#ffa225");
+      sprites[last_ground_sprite].init(redish, 6, -3, 6, 0.4f);
+
+      sprites[background_sprite_stopper].init(white, -9.1f, 0, 0.2f, 6);
+
+      for (int i = 0; i != num_rows; ++i) {
+        sprites[first_enemy_anchor + i].init(white, 3.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
+      }
 
       // use the missile texture
       GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
@@ -552,6 +586,10 @@ namespace octet {
       cur_source = 0;
       alGenSources(num_sound_sources, sources);
 
+      //TESTING
+      sprites[first_invaderer_sprite].is_enabled() = true;
+      sprites[first_invaderer_sprite].set_relative(sprites[first_enemy_anchor],0,0);
+
       // Local values for viewport
       app_common::get_viewport_size(screen_w, screen_h);
 
@@ -570,7 +608,8 @@ namespace octet {
       if (game_over) {
         return;
       }
-      
+      sprites[first_invaderer_sprite].translate(-0.1f, 0);
+
       move_ship();
 
       do_shoot_angle();
@@ -578,6 +617,8 @@ namespace octet {
       fire_missiles();
 
       fire_bombs();
+
+	    move_background();
 
       move_missiles();
 
