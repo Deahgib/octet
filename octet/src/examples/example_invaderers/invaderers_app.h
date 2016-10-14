@@ -30,6 +30,9 @@ namespace octet {
 
     float rot_angle;
 
+    float pos_x;
+    float pos_y;
+
     // what texture is on our sprite
     int texture;
 
@@ -42,6 +45,8 @@ namespace octet {
     }
 
     void init(int _texture, float x, float y, float w, float h) {
+      pos_x = x;
+      pos_y = y;
       modelToWorld.loadIdentity();
       modelToWorld.translate(x, y, 0);
       rot_angle = 0;
@@ -115,9 +120,10 @@ namespace octet {
       rotate(angle - rot_angle);
     }
 
-    void get_position(float &x, float &y) {
-      x = modelToWorld.get()[0];
-      y = modelToWorld.get()[1];
+    void get_position(const mat4t &cameraToWorld, float &x, float &y) {
+      mat4t modelToProjection = mat4t::build_projection_matrix(modelToWorld, cameraToWorld);
+      x = (float) modelToProjection[3][0];
+      y = (float) modelToProjection[3][1];
     }
 
     // position the object relative to another.
@@ -195,6 +201,7 @@ namespace octet {
     int bombs_disabled;
 
     int mouse_x, mouse_y;
+    int screen_w, screen_h;
 
     // accounting for bad guys
     int live_invaderers;
@@ -236,7 +243,7 @@ namespace octet {
       live_invaderers--;
       score++;
 
-	  invader_velocity *= 1.05;
+	  invader_velocity *= 1.05f;
 
 
       if (live_invaderers == 4) {
@@ -254,8 +261,8 @@ namespace octet {
       alSourcePlay(source);
 
       if (--num_lives == 0) {
-        game_over = true;
-        sprites[game_over_sprite].translate(-20, 0);
+        //game_over = true;
+        //sprites[game_over_sprite].translate(-20, 0);
       }
     }
 
@@ -430,6 +437,40 @@ namespace octet {
       glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
     }
 
+    void do_shoot_angle() {
+      app_common::get_mouse_pos(mouse_x, mouse_y);
+      float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) / 2.0f)) / ((float)(screen_w) / 2.0f)) * 3;
+
+      float mouse_coord_y = (((float)(mouse_y)-((float)(screen_h) / 2.0f)) / ((float)(screen_h) / 2.0f)) * -3;
+
+      float ship_x, ship_y;
+      sprites[ship_sprite].get_position(cameraToWorld, ship_x, ship_y);
+      //printf("Mouse %f, %f\n", mouse_coord_x, mouse_coord_y);
+
+      float dx = ship_x - mouse_coord_x;
+      float dy = ship_y - mouse_coord_y;
+      float angle = 0;
+      // If dx is positive then mouse is to the left ship is right
+      if (dx >= 0 && dy < 0) {
+        // TOA  tan = op / adj
+        float radAngle = math::atan2(dx, -dy);
+        angle = radAngle * 180.0f / 3.141592f;
+        printf("Angle %f\n", angle);
+      }
+      else if (dx < 0 && dy < 0) {
+        float radAngle = math::atan2(-dx, -dy);
+        angle = -1 * radAngle * 180.0f / 3.141592f;
+        printf("Angle %f\n", angle);
+      }
+      sprites[ship_sprite].set_rotation(angle);
+      
+      // if dy is positive then mouse is above
+
+
+
+
+    }
+
   public:
 
     // this is called when we construct the class
@@ -492,6 +533,9 @@ namespace octet {
       cur_source = 0;
       alGenSources(num_sound_sources, sources);
 
+      // Local values for viewport
+      app_common::get_viewport_size(screen_w, screen_h);
+
       // sundry counters and game state.
       missiles_disabled = 0;
       bombs_disabled = 50;
@@ -507,14 +551,10 @@ namespace octet {
       if (game_over) {
         return;
       }
-
-      app_common::get_mouse_pos(mouse_x, mouse_y);
-
-      float ship_x, ship_y;
-      sprites[ship_sprite].get_position(ship_x, ship_y);
-      printf("%d, %d\n", ship_x, ship_y);
-
+      
       move_ship();
+
+      do_shoot_angle();
 
       fire_missiles();
 
