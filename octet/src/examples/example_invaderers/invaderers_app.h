@@ -16,6 +16,11 @@
 //   Texture loaded from GIF file
 //   Audio
 //
+// Edited by Louis Bennette 
+// 
+// Sound fire.wav supplied by http://soundbible.com/1326-Tank-Firing.html 
+//
+//
 
 namespace octet {
   class sprite {
@@ -176,7 +181,7 @@ namespace octet {
       num_sound_sources = 8,
       num_rows = 5,
       num_cols = 10,
-      num_missiles = 2,
+      num_missiles = 5,
       num_bombs = 2,
       num_borders = 4,
       num_invaderers = num_rows * num_cols,
@@ -184,7 +189,7 @@ namespace octet {
 
       first_ground_sprite = 0,
       last_ground_sprite = first_ground_sprite + 1,
-      background_sprite_stopper, // used to scroll the background along.
+      background_sprite_anchor, // used to scroll the background along.
 
       // sprite definitions
       ship_sprite,
@@ -311,7 +316,7 @@ namespace octet {
           if (!sprites[first_missile_sprite+i].is_enabled()) {
             sprites[first_missile_sprite+i].set_relative(sprites[gun_sprite], 0, 0.5f);
             sprites[first_missile_sprite+i].is_enabled() = true;
-            missiles_disabled = 5;
+            missiles_disabled = 2;
             ALuint source = get_sound_source();
             alSourcei(source, AL_BUFFER, whoosh);
             alSourcePlay(source);
@@ -465,17 +470,17 @@ namespace octet {
 		sprites[first_ground_sprite].translate(-0.1f, 0);
 		sprites[last_ground_sprite].translate(-0.1f, 0);
 
-    if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_stopper])) {
+    if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
       sprites[first_ground_sprite].translate(12,0);
-    }else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_stopper])) {
+    }else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
       sprites[last_ground_sprite].translate(12, 0);
     }
 	}
 
     void do_shoot_angle() {
       app_common::get_mouse_pos(mouse_x, mouse_y);
-      float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) / 2.0f)) / ((float)(screen_w) / 2.0f)) * 3; // Map the mouse coords on the screen with boundaries -3 to 3 for x and y
-      float mouse_coord_y = (((float)(mouse_y)-((float)(screen_h) / 2.0f)) / ((float)(screen_h) / 2.0f)) * -3;
+      float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) * 0.5f)) / ((float)(screen_w) * 0.5f)) * 3; // Map the mouse coords on the screen with boundaries -3 to 3 for x and y
+      float mouse_coord_y = (((float)(mouse_y)-((float)(screen_h) * 0.5f)) / ((float)(screen_h) * 0.5f)) * -3;
 
       float ship_x, ship_y;
       sprites[ship_sprite].get_position(cameraToWorld, ship_x, ship_y);
@@ -553,16 +558,11 @@ namespace octet {
       sprites[first_border_sprite+2].init(white, -3.2f, 0, 0.2f, 6.4f);
       sprites[first_border_sprite+3].init(white, 3.2f,  0, 0.2f, 6.4f);
 
+      // background textures
       GLint green = resource_dict::get_texture_handle(GL_RGB, "#a2fb25");
       sprites[first_ground_sprite+0].init(green, 0, -3, 6, 0.4f);
       GLint redish = resource_dict::get_texture_handle(GL_RGB, "#ffa225");
       sprites[last_ground_sprite].init(redish, 6, -3, 6, 0.4f);
-
-      sprites[background_sprite_stopper].init(white, -9.1f, 0, 0.2f, 6);
-
-      for (int i = 0; i != num_rows; ++i) {
-        sprites[first_enemy_anchor + i].init(white, 3.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
-      }
 
       // use the missile texture
       GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
@@ -580,8 +580,14 @@ namespace octet {
         sprites[first_bomb_sprite+i].is_enabled() = false;
       }
 
+      // Anchors (Off screen)
+      sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
+      for (int i = 0; i != num_rows; ++i) {
+        sprites[first_enemy_anchor + i].init(white, 3.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
+      }
+
       // sounds
-      whoosh = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/whoosh.wav");
+      whoosh = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/fire.wav");
       bang = resource_dict::get_sound_handle(AL_FORMAT_MONO16, "assets/invaderers/bang.wav");
       cur_source = 0;
       alGenSources(num_sound_sources, sources);
@@ -637,11 +643,12 @@ namespace octet {
     void draw_world(int x, int y, int w, int h) {
       simulate();
 
-	  if (game_over && is_key_going_up(key_enter)) {
-		  app_init();
-		  return;
-	  }
-
+	    if (game_over && is_key_going_up(key_enter)) {
+		    app_init();
+		    return;
+	    }
+      app_init();
+      return;
       // set a viewport - includes whole window area
       glViewport(x, y, w, h);
 
