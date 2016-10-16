@@ -184,7 +184,8 @@ namespace octet {
       num_missiles = 5,
       num_bombs = 2,
       num_borders = 4,
-      num_invaderers = num_rows * num_cols,
+      num_planes = 10, // Number of sprites to pool
+      num_blimps = 10, // number of sprites to pool
 
 
       first_ground_sprite = 0,
@@ -192,12 +193,15 @@ namespace octet {
       background_sprite_anchor, // used to scroll the background along.
 
       // sprite definitions
-      ship_sprite,
+      tank_sprite,
       gun_sprite,
       game_over_sprite,
 
-      first_invaderer_sprite,
-      last_invaderer_sprite = first_invaderer_sprite + num_invaderers - 1,
+      first_plane_sprite,
+      last_plane_sprite = first_plane_sprite + num_planes - 1,
+
+      first_blimp_sprite,
+      last_blimp_sprite = first_blimp_sprite + num_blimps - 1,
 
       first_missile_sprite,
       last_missile_sprite = first_missile_sprite + num_missiles - 1,
@@ -253,6 +257,42 @@ namespace octet {
 
     ALuint get_sound_source() { return sources[cur_source++ % num_sound_sources]; }
 
+    // Enemy spawning schedule
+    struct spawn_time {
+      int time; // nb of frames between previous spawn and this spawn
+      int enemy_type; // 1 = plane, 2 = blimp 
+      int spawn_anchor; // index 0 to 4
+    };
+    int spawning_disabled;
+    std::vector<spawn_time> enemy_schedule;
+    std::vector<spawn_time>::iterator enemy_schelude_it;
+    void spawn_enemies() {
+      if (spawning_disabled > 0) {
+        --spawning_disabled;
+      }
+      else{
+        if (enemy_schelude_it >= enemy_schedule.end()) {
+          enemy_schelude_it = enemy_schedule.begin();
+          //printf("Scheduler finished\n");
+          return;
+        }
+        // Do plane sprites
+        if ((*enemy_schelude_it).enemy_type == 1) {
+          for (int i = 0; i < num_planes; ++i) {
+            if (!sprites[first_plane_sprite + i].is_enabled()) {
+              sprites[first_plane_sprite + i].set_relative(sprites[first_enemy_anchor + (*enemy_schelude_it).spawn_anchor],0,0);
+              sprites[first_plane_sprite + i].is_enabled() = true;
+              // Play sound
+
+              break;
+            }
+          }
+        }
+        spawning_disabled = (*enemy_schelude_it).time;
+        ++enemy_schelude_it;
+      }
+    }
+
     // called when we hit an enemy
     void on_hit_invaderer() {
       ALuint source = get_sound_source();
@@ -262,7 +302,7 @@ namespace octet {
       live_invaderers--;
       score++;
 
-	  invader_velocity *= 1.05f;
+      invader_velocity *= 1.05f;
 
 
       if (live_invaderers == 4) {
@@ -290,19 +330,19 @@ namespace octet {
       const float ship_speed = 0.05f;
       // left and right arrows
       if (is_key_down(key_left) || is_key_down(key_a)) {
-        sprites[ship_sprite].translate(-ship_speed, 0);
-        if (sprites[ship_sprite].collides_with(sprites[first_border_sprite+2])) {
-          sprites[ship_sprite].translate(+ship_speed, 0);
+        sprites[tank_sprite].translate(-ship_speed, 0);
+        if (sprites[tank_sprite].collides_with(sprites[first_border_sprite+2])) {
+          sprites[tank_sprite].translate(+ship_speed, 0);
         }
       } else if (is_key_down(key_right) || is_key_down(key_d)) {
-        sprites[ship_sprite].translate(+ship_speed, 0);
-        if (sprites[ship_sprite].collides_with(sprites[first_border_sprite+3])) {
-          sprites[ship_sprite].translate(-ship_speed, 0);
+        sprites[tank_sprite].translate(+ship_speed, 0);
+        if (sprites[tank_sprite].collides_with(sprites[first_border_sprite+3])) {
+          sprites[tank_sprite].translate(-ship_speed, 0);
         }
       }
       float x, y;
-      sprites[ship_sprite].get_position(cameraToWorld, x, y);
-      sprites[gun_sprite].set_position(x, y+0.1f);
+      sprites[tank_sprite].get_position(cameraToWorld, x, y);
+      sprites[gun_sprite].set_position(x, y+0.2f);
 
     }
 
@@ -332,9 +372,9 @@ namespace octet {
         --bombs_disabled;
       } else {
         // find an invaderer
-        sprite &ship = sprites[ship_sprite];
-        for (int j = randomizer.get(0, num_invaderers); j < num_invaderers; ++j) {
-          sprite &invaderer = sprites[first_invaderer_sprite+j];
+        sprite &ship = sprites[tank_sprite];
+        for (int j = randomizer.get(0, num_planes); j < num_planes; ++j) {
+          sprite &invaderer = sprites[first_plane_sprite+j];
           if (invaderer.is_enabled() && invaderer.is_above(ship, 0.3f)) {
             // find a bomb
             for (int i = 0; i != num_bombs; ++i) {
@@ -361,8 +401,8 @@ namespace octet {
         sprite &missile = sprites[first_missile_sprite+i];
         if (missile.is_enabled()) {
           missile.translate(0, missile_speed);
-          for (int j = 0; j != num_invaderers; ++j) {
-            sprite &invaderer = sprites[first_invaderer_sprite+j];
+          for (int j = 0; j != num_planes; ++j) {
+            sprite &invaderer = sprites[first_plane_sprite+j];
             if (invaderer.is_enabled() && missile.collides_with(invaderer)) {
               invaderer.is_enabled() = false;
               invaderer.translate(20, 0);
@@ -395,7 +435,7 @@ namespace octet {
         sprite &bomb = sprites[first_bomb_sprite+i];
         if (bomb.is_enabled()) {
           bomb.translate(0, -bomb_speed);
-          if (bomb.collides_with(sprites[ship_sprite])) {
+          if (bomb.collides_with(sprites[tank_sprite])) {
             bomb.is_enabled() = false;
             bomb.translate(20, 0);
             bombs_disabled = 50;
@@ -413,23 +453,22 @@ namespace octet {
 
     // move the array of enemies
     void move_invaders(float dx, float dy) {
-      for (int j = 0; j != num_invaderers; ++j) {
-        sprite &invaderer = sprites[first_invaderer_sprite+j];
+      for (int j = 0; j != num_planes; ++j) {
+        sprite &invaderer = sprites[first_plane_sprite+j];
         if (invaderer.is_enabled()) {
-          invaderer.translate(dx, dy);
+          invaderer.translate(-0.1f, 0);
         }
       }
     }
 
     // check if any invaders hit the sides.
-    bool invaders_collide(sprite &border) {
-      for (int j = 0; j != num_invaderers; ++j) {
-        sprite &invaderer = sprites[first_invaderer_sprite+j];
-        if (invaderer.is_enabled() && invaderer.collides_with(border)) {
-          return true;
+    void invaders_collide() {
+      for (int j = 0; j != num_planes; ++j) {
+        sprite &invaderer = sprites[first_plane_sprite+j];
+        if (invaderer.is_enabled() && invaderer.collides_with(sprites[background_sprite_anchor])) {
+          invaderer.is_enabled() = false;
         }
       }
-      return false;
     }
 
 
@@ -483,7 +522,7 @@ namespace octet {
       float mouse_coord_y = (((float)(mouse_y)-((float)(screen_h) * 0.5f)) / ((float)(screen_h) * 0.5f)) * -3;
 
       float ship_x, ship_y;
-      sprites[ship_sprite].get_position(cameraToWorld, ship_x, ship_y);
+      sprites[tank_sprite].get_position(cameraToWorld, ship_x, ship_y);
 
       // Work out the angle between the gun and the cursor relative to the y axis
       float dx = ship_x - mouse_coord_x;
@@ -522,11 +561,12 @@ namespace octet {
 
       font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
 
-      GLuint ship = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/ship.gif");
-      sprites[ship_sprite].init(ship, 0, -2.75f, 0.25f, 0.25f);
+      GLuint tank = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/tank.gif");
+      sprites[tank_sprite].init(tank, 0, -2.65f, 0.83f, 0.5f);
 
       GLuint gun = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/gun.gif");
-      sprites[gun_sprite].init(gun, 0, -2.65f, 0.06f, 0.12f);
+      sprites[gun_sprite].init(gun, 0, 0, 0.2f, 0.83f);
+      sprites[gun_sprite].rotate(-90);
 
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
@@ -543,12 +583,10 @@ namespace octet {
       }*/
 
       GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-      for (int j = 0; j != num_rows; ++j) {
-        for (int i = 0; i != num_cols; ++i) {
-          assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
-          sprites[first_invaderer_sprite + i + j*num_cols].init( invaderer, 0, 0, 0.45f, 0.25f);
-          sprites[first_invaderer_sprite + i + j*num_cols].is_enabled() = false;
-        }
+      for (int i = 0; i != num_planes; ++i) {
+        assert(first_plane_sprite + num_planes - 1 <= last_plane_sprite);
+        sprites[first_plane_sprite + i ].init( invaderer, 0, 0, 0.45f, 0.25f);
+        sprites[first_plane_sprite + i ].is_enabled() = false;
       }
 
       // set the border to white for clarity
@@ -592,9 +630,26 @@ namespace octet {
       cur_source = 0;
       alGenSources(num_sound_sources, sources);
 
-      //TESTING
-      sprites[first_invaderer_sprite].is_enabled() = true;
-      sprites[first_invaderer_sprite].set_relative(sprites[first_enemy_anchor],0,0);
+      //TEST LEVEL: Will be imported from CSV later
+      spawn_time enemy1, enemy2, enemy3, enemy4;
+      enemy1.enemy_type = 1;
+      enemy1.spawn_anchor = 0;
+      enemy1.time = 20;
+      enemy2.enemy_type = 1;
+      enemy2.spawn_anchor = 2;
+      enemy2.time = 50;
+      enemy3.enemy_type = 1;
+      enemy3.spawn_anchor = 0;
+      enemy3.time = 5;
+      enemy4.enemy_type = 1;
+      enemy4.spawn_anchor = 1;
+      enemy4.time = 50;
+      enemy_schedule.push_back(enemy1);
+      enemy_schedule.push_back(enemy2);
+      enemy_schedule.push_back(enemy3);
+      enemy_schedule.push_back(enemy4);
+      enemy_schelude_it = enemy_schedule.begin();
+      spawning_disabled = 50;
 
       // Local values for viewport
       app_common::get_viewport_size(screen_w, screen_h);
@@ -603,7 +658,7 @@ namespace octet {
       missiles_disabled = 0;
       bombs_disabled = 50;
       invader_velocity = 0.01f;
-      live_invaderers = num_invaderers;
+      live_invaderers = num_planes;
       num_lives = 3;
       game_over = false;
       score = 0;
@@ -614,9 +669,10 @@ namespace octet {
       if (game_over) {
         return;
       }
-      sprites[first_invaderer_sprite].translate(-0.1f, 0);
 
       move_ship();
+
+      spawn_enemies();
 
       do_shoot_angle();
 
@@ -632,11 +688,8 @@ namespace octet {
 
       move_invaders(invader_velocity, 0);
 
-      sprite &border = sprites[first_border_sprite+(invader_velocity < 0 ? 2 : 3)];
-      if (invaders_collide(border)) {
-        invader_velocity = -invader_velocity;
-        move_invaders(invader_velocity, -0.1f);
-      }
+      invaders_collide();
+
     }
 
     // this is called to draw the world
@@ -647,8 +700,7 @@ namespace octet {
 		    app_init();
 		    return;
 	    }
-      app_init();
-      return;
+
       // set a viewport - includes whole window area
       glViewport(x, y, w, h);
 
