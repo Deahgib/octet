@@ -190,6 +190,8 @@ namespace octet {
 
       first_ground_sprite = 0,
       last_ground_sprite = first_ground_sprite + 1,
+      first_sky_sprite,
+      last_sky_sprite = first_sky_sprite + 1,
       background_sprite_anchor, // used to scroll the background along.
 
       // sprite definitions
@@ -288,6 +290,18 @@ namespace octet {
             }
           }
         }
+        else if ((*enemy_schelude_it).enemy_type == 2) {
+          for (int i = 0; i < num_blimps; ++i) {
+            if (!sprites[first_blimp_sprite + i].is_enabled()) {
+              sprites[first_blimp_sprite + i].set_relative(sprites[first_enemy_anchor + (*enemy_schelude_it).spawn_anchor], 0, 0);
+              sprites[first_blimp_sprite + i].is_enabled() = true;
+              // Play sound
+
+              break;
+            }
+          }
+        }
+
         spawning_disabled = (*enemy_schelude_it).time;
         ++enemy_schelude_it;
       }
@@ -302,11 +316,11 @@ namespace octet {
       live_invaderers--;
       score++;
 
-      invader_velocity *= 1.05f;
+      //invader_velocity *= 1.05f;
 
 
       if (live_invaderers == 4) {
-        invader_velocity *= 4;
+        //invader_velocity *= 4;
       } else if (live_invaderers == 0) {
         game_over = true;
         sprites[game_over_sprite].translate(-20, 0);
@@ -413,6 +427,18 @@ namespace octet {
               goto next_missile;
             }
           }
+          for (int j = 0; j != num_blimps; ++j) {
+            sprite &blimp = sprites[first_blimp_sprite + j];
+            if (blimp.is_enabled() && missile.collides_with(blimp)) {
+              blimp.is_enabled() = false;
+              blimp.translate(20, 0);
+              missile.is_enabled() = false;
+              missile.translate(20, 0);
+              on_hit_invaderer();
+
+              goto next_missile;
+            }
+          }
           if (missile.collides_with(sprites[first_border_sprite+1])) {
             missile.is_enabled() = false;
             missile.translate(20, 0);
@@ -452,11 +478,17 @@ namespace octet {
     }
 
     // move the array of enemies
-    void move_invaders(float dx, float dy) {
+    void move_invaders() {
       for (int j = 0; j != num_planes; ++j) {
         sprite &invaderer = sprites[first_plane_sprite+j];
         if (invaderer.is_enabled()) {
-          invaderer.translate(-0.1f, 0);
+          invaderer.translate(invader_velocity, 0);
+        }
+      }
+      for (int j = 0; j != num_blimps; ++j) {
+        sprite &blimp = sprites[first_blimp_sprite + j];
+        if (blimp.is_enabled()) {
+          blimp.translate(invader_velocity * 0.5f, 0);
         }
       }
     }
@@ -505,16 +537,25 @@ namespace octet {
       glDrawElements(GL_TRIANGLES, num_quads * 6, GL_UNSIGNED_INT, indices);
     }
 
-	void move_background() {
-		sprites[first_ground_sprite].translate(-0.1f, 0);
-		sprites[last_ground_sprite].translate(-0.1f, 0);
+	  void move_background() {
+		  sprites[first_ground_sprite].translate(-0.05f, 0);
+		  sprites[last_ground_sprite].translate(-0.05f, 0);
+      sprites[first_sky_sprite].translate(-0.025f, 0);
+      sprites[last_sky_sprite].translate(-0.025f, 0);
 
-    if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
-      sprites[first_ground_sprite].translate(12,0);
-    }else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
-      sprites[last_ground_sprite].translate(12, 0);
-    }
-	}
+      if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
+        sprites[first_ground_sprite].translate(12,0);
+      }
+      else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
+        sprites[last_ground_sprite].translate(12, 0);
+      }
+      if (sprites[first_sky_sprite].collides_with(sprites[background_sprite_anchor])) {
+        sprites[first_sky_sprite].translate(12, 0);
+      }
+      else if (sprites[last_sky_sprite].collides_with(sprites[background_sprite_anchor])) {
+        sprites[last_sky_sprite].translate(12, 0);
+      }
+	  }
 
     void do_shoot_angle() {
       app_common::get_mouse_pos(mouse_x, mouse_y);
@@ -562,7 +603,7 @@ namespace octet {
       font_texture = resource_dict::get_texture_handle(GL_RGBA, "assets/big_0.gif");
 
       GLuint tank = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/tank.gif");
-      sprites[tank_sprite].init(tank, 0, -2.65f, 0.83f, 0.5f);
+      sprites[tank_sprite].init(tank, 0, -2.05f, 0.83f, 0.5f);
 
       GLuint gun = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/gun.gif");
       sprites[gun_sprite].init(gun, 0, 0, 0.2f, 0.83f);
@@ -589,6 +630,13 @@ namespace octet {
         sprites[first_plane_sprite + i ].is_enabled() = false;
       }
 
+      GLint blimp = resource_dict::get_texture_handle(GL_RGB, "#ff0000");
+      for (int i = 0; i != num_blimps; ++i) {
+        assert(first_blimp_sprite + num_blimps - 1 <= last_blimp_sprite);
+        sprites[first_blimp_sprite + i].init(blimp, 0, 0, 0.65f, 0.45f);
+        sprites[first_blimp_sprite + i].is_enabled() = false;
+      }
+
       // set the border to white for clarity
       GLuint white = resource_dict::get_texture_handle(GL_RGB, "#ffffff");
       sprites[first_border_sprite+0].init(white, 0, -3.2f, 6.4f, 0.2f);
@@ -598,9 +646,13 @@ namespace octet {
 
       // background textures
       GLint green = resource_dict::get_texture_handle(GL_RGB, "#a2fb25");
-      sprites[first_ground_sprite+0].init(green, 0, -3, 6, 0.4f);
+      sprites[first_ground_sprite].init(green, 0, -2.4f, 6, 0.4f);
       GLint redish = resource_dict::get_texture_handle(GL_RGB, "#ffa225");
-      sprites[last_ground_sprite].init(redish, 6, -3, 6, 0.4f);
+      sprites[last_ground_sprite].init(redish, 6, -2.4f, 6, 0.4f);
+      GLint blue = resource_dict::get_texture_handle(GL_RGB, "#0000ff");
+      sprites[first_sky_sprite].init(blue, 0, 0.4f, 6, 5.2f);
+      GLint blueish = resource_dict::get_texture_handle(GL_RGB, "#a2a2fe");
+      sprites[last_sky_sprite].init(blueish, 6, 0.4f, 6, 5.2f);
 
       // use the missile texture
       GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
@@ -621,7 +673,7 @@ namespace octet {
       // Anchors (Off screen)
       sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
       for (int i = 0; i != num_rows; ++i) {
-        sprites[first_enemy_anchor + i].init(white, 3.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
+        sprites[first_enemy_anchor + i].init(white, 2.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
       }
 
       // sounds
@@ -638,7 +690,7 @@ namespace octet {
       enemy2.enemy_type = 1;
       enemy2.spawn_anchor = 2;
       enemy2.time = 50;
-      enemy3.enemy_type = 1;
+      enemy3.enemy_type = 2;
       enemy3.spawn_anchor = 0;
       enemy3.time = 5;
       enemy4.enemy_type = 1;
@@ -657,7 +709,7 @@ namespace octet {
       // sundry counters and game state.
       missiles_disabled = 0;
       bombs_disabled = 50;
-      invader_velocity = 0.01f;
+      invader_velocity = -0.05f;
       live_invaderers = num_planes;
       num_lives = 3;
       game_over = false;
@@ -686,7 +738,7 @@ namespace octet {
 
       move_bombs();
 
-      move_invaders(invader_velocity, 0);
+      move_invaders();
 
       invaders_collide();
 
@@ -722,7 +774,7 @@ namespace octet {
 
       char score_text[32];
       sprintf(score_text, "score: %d   lives: %d\n", score, num_lives);
-      draw_text(texture_shader_, -1.75f, 2, 1.0f/256, score_text);
+      draw_text(texture_shader_, -1.75f, -3.6f, 1.0f/256, score_text);
 
       // move the listener with the camera
       vec4 &cpos = cameraToWorld.w();
