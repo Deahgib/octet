@@ -63,10 +63,10 @@ namespace octet {
     key_alt,
 
     key_r = 114,
-	key_w = 119,
-	key_a = 97,
-	key_s = 115,
-	key_d = 100,
+    key_w = 119,
+    key_a = 97,
+    key_s = 115,
+    key_d = 100,
 
     // mouse buttons
     key_lmb,

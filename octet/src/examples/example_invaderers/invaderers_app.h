@@ -190,8 +190,10 @@ namespace octet {
 
       first_ground_sprite = 0,
       last_ground_sprite = first_ground_sprite + 1,
+
       first_sky_sprite,
       last_sky_sprite = first_sky_sprite + 1,
+
       background_sprite_anchor, // used to scroll the background along.
 
       // sprite definitions
@@ -307,6 +309,47 @@ namespace octet {
       }
     }
 
+    void load_level() {
+      /*
+        Code taken from Andy Thomason on Github https://github.com/andy-thomason/read_a_csv_file/blob/master/main.cpp
+      */
+      std::ifstream is("../../../assets/invaderers/level.csv");
+      if (is.bad() || !is.is_open()) return;
+
+      // store the line here
+      char buffer[2048];
+
+      // loop over lines
+      while (!is.eof()) {
+        is.getline(buffer, sizeof(buffer));
+
+        spawn_time enemy;
+        // loop over columns
+        char *b = buffer;
+        for (int col = 0; ; ++col) {
+          char *e = b;
+          while (*e != 0 && *e != ',') ++e;
+
+          // now b -> e contains the chars in a column
+          if (col == 0) {
+            enemy.time = std::atoi(b);
+          }
+          else if (col == 1) {
+            enemy.enemy_type = std::atoi(b);
+          }
+          else if (col == 2) {
+            enemy.spawn_anchor = std::atoi(b);
+          }
+
+          if (*e != ',') break;
+          b = e + 1;
+        }
+        enemy_schedule.push_back(enemy);
+        //printf("enemy: %i | %i | %i\n", enemy.time, enemy.enemy_type, enemy.spawn_anchor);
+      }
+      enemy_schelude_it = enemy_schedule.begin();
+    }
+
     // called when we hit an enemy
     void on_hit_invaderer() {
       ALuint source = get_sound_source();
@@ -319,7 +362,7 @@ namespace octet {
       //invader_velocity *= 1.05f;
 
 
-      if (live_invaderers == 4) {
+    if (live_invaderers == 4) {
         //invader_velocity *= 4;
       } else if (live_invaderers == 0) {
         game_over = true;
@@ -343,12 +386,12 @@ namespace octet {
     void move_ship() {
       const float ship_speed = 0.05f;
       // left and right arrows
-      if (is_key_down(key_left) || is_key_down(key_a)) {
+      if (is_key_down(key_left) || is_key_down('a')) {
         sprites[tank_sprite].translate(-ship_speed, 0);
         if (sprites[tank_sprite].collides_with(sprites[first_border_sprite+2])) {
           sprites[tank_sprite].translate(+ship_speed, 0);
         }
-      } else if (is_key_down(key_right) || is_key_down(key_d)) {
+      } else if (is_key_down(key_right) || is_key_down('d')) {
         sprites[tank_sprite].translate(+ship_speed, 0);
         if (sprites[tank_sprite].collides_with(sprites[first_border_sprite+3])) {
           sprites[tank_sprite].translate(-ship_speed, 0);
@@ -395,6 +438,24 @@ namespace octet {
               if (!sprites[first_bomb_sprite+i].is_enabled()) {
                 sprites[first_bomb_sprite+i].set_relative(invaderer, 0, -0.25f);
                 sprites[first_bomb_sprite+i].is_enabled() = true;
+                bombs_disabled = 30;
+                ALuint source = get_sound_source();
+                alSourcei(source, AL_BUFFER, whoosh);
+                alSourcePlay(source);
+                return;
+              }
+            }
+            return;
+          }
+        }
+        for (int j = randomizer.get(0, num_blimps); j < num_blimps; ++j) {
+          sprite &blimp = sprites[first_blimp_sprite + j];
+          if (blimp.is_enabled() && blimp.is_above(ship, 0.3f)) {
+            // find a bomb
+            for (int i = 0; i != num_bombs; ++i) {
+              if (!sprites[first_bomb_sprite + i].is_enabled()) {
+                sprites[first_bomb_sprite + i].set_relative(blimp, 0, -0.25f);
+                sprites[first_bomb_sprite + i].is_enabled() = true;
                 bombs_disabled = 30;
                 ALuint source = get_sound_source();
                 alSourcei(source, AL_BUFFER, whoosh);
@@ -683,6 +744,7 @@ namespace octet {
       alGenSources(num_sound_sources, sources);
 
       //TEST LEVEL: Will be imported from CSV later
+      /*
       spawn_time enemy1, enemy2, enemy3, enemy4;
       enemy1.enemy_type = 1;
       enemy1.spawn_anchor = 0;
@@ -701,6 +763,8 @@ namespace octet {
       enemy_schedule.push_back(enemy3);
       enemy_schedule.push_back(enemy4);
       enemy_schelude_it = enemy_schedule.begin();
+      */
+      load_level();
       spawning_disabled = 50;
 
       // Local values for viewport
