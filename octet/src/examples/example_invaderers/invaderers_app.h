@@ -19,7 +19,7 @@
 // Edited by Louis Bennette 
 // 
 // Sound fire.wav supplied by http://soundbible.com/1326-Tank-Firing.html 
-//
+// Texture tank & gun taken from : 
 //
 
 namespace octet {
@@ -237,6 +237,7 @@ namespace octet {
     // game state
     bool game_over;
     int score;
+    int score_multiplier;
 
     // speed of enemy
     float invader_velocity;
@@ -356,18 +357,19 @@ namespace octet {
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
 
-      live_invaderers--;
-      score++;
+      score += score_multiplier;
+      ++score_multiplier;
 
       //invader_velocity *= 1.05f;
 
-
-    if (live_invaderers == 4) {
+      /*
+      if (live_invaderers == 4) {
         //invader_velocity *= 4;
       } else if (live_invaderers == 0) {
         game_over = true;
         sprites[game_over_sprite].translate(-20, 0);
       }
+      */
     }
 
     // called when we are hit
@@ -375,7 +377,7 @@ namespace octet {
       ALuint source = get_sound_source();
       alSourcei(source, AL_BUFFER, bang);
       alSourcePlay(source);
-
+      score_multiplier = 1;
       if (--num_lives == 0) {
         game_over = true;
         sprites[game_over_sprite].translate(-20, 0);
@@ -503,12 +505,15 @@ namespace octet {
           if (missile.collides_with(sprites[first_border_sprite+1])) {
             missile.is_enabled() = false;
             missile.translate(20, 0);
+            score_multiplier = 1;
           }else if (missile.collides_with(sprites[first_border_sprite + 2])) {
             missile.is_enabled() = false;
             missile.translate(20, 0);
+            score_multiplier = 1;
           }else if (missile.collides_with(sprites[first_border_sprite + 3])) {
             missile.is_enabled() = false;
             missile.translate(20, 0);
+            score_multiplier = 1;
           }
         }
       next_missile:;
@@ -582,7 +587,7 @@ namespace octet {
       enum { max_quads = 32 };
       bitmap_font::vertex vertices[max_quads*4];
       uint32_t indices[max_quads*6];
-      aabb bb(vec3(0, 0, 0), vec3(256, 256, 0));
+      aabb bb(vec3(0, 0, 0), vec3(512, 512, 0));
 
       unsigned num_quads = font.build_mesh(bb, vertices, indices, max_quads, text, 0);
       glActiveTexture(GL_TEXTURE0);
@@ -673,17 +678,6 @@ namespace octet {
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
-      /*
-      GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
-      for (int j = 0; j != num_rows; ++j) {
-        for (int i = 0; i != num_cols; ++i) {
-          assert(first_invaderer_sprite + i + j*num_cols <= last_invaderer_sprite);
-          sprites[first_invaderer_sprite + i + j*num_cols].init(
-            invaderer, ((float)i - num_cols * 0.5f) * 0.5f, 2.50f - ((float)j * 0.5f), 0.25f, 0.25f
-          );
-        }
-      }*/
-
       GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
       for (int i = 0; i != num_planes; ++i) {
         assert(first_plane_sprite + num_planes - 1 <= last_plane_sprite);
@@ -743,27 +737,6 @@ namespace octet {
       cur_source = 0;
       alGenSources(num_sound_sources, sources);
 
-      //TEST LEVEL: Will be imported from CSV later
-      /*
-      spawn_time enemy1, enemy2, enemy3, enemy4;
-      enemy1.enemy_type = 1;
-      enemy1.spawn_anchor = 0;
-      enemy1.time = 20;
-      enemy2.enemy_type = 1;
-      enemy2.spawn_anchor = 2;
-      enemy2.time = 50;
-      enemy3.enemy_type = 2;
-      enemy3.spawn_anchor = 0;
-      enemy3.time = 5;
-      enemy4.enemy_type = 1;
-      enemy4.spawn_anchor = 1;
-      enemy4.time = 50;
-      enemy_schedule.push_back(enemy1);
-      enemy_schedule.push_back(enemy2);
-      enemy_schedule.push_back(enemy3);
-      enemy_schedule.push_back(enemy4);
-      enemy_schelude_it = enemy_schedule.begin();
-      */
       load_level();
       spawning_disabled = 50;
 
@@ -774,10 +747,10 @@ namespace octet {
       missiles_disabled = 0;
       bombs_disabled = 50;
       invader_velocity = -0.05f;
-      live_invaderers = num_planes;
       num_lives = 3;
       game_over = false;
       score = 0;
+      score_multiplier = 1;
     }
 
     // called every frame to move things
@@ -836,9 +809,9 @@ namespace octet {
         sprites[i].render(texture_shader_, cameraToWorld);
       }
 
-      char score_text[32];
-      sprintf(score_text, "score: %d   lives: %d\n", score, num_lives);
-      draw_text(texture_shader_, -1.75f, -3.6f, 1.0f/256, score_text);
+      char score_text[64];
+      sprintf(score_text, "combo: X%d   score: %d   lives: %d\n", score_multiplier, score, num_lives);
+      draw_text(texture_shader_, -0.75f, -4.6f, 1.0f/256, score_text);
 
       // move the listener with the camera
       vec4 &cpos = cameraToWorld.w();

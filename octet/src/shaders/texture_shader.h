@@ -15,6 +15,9 @@ namespace octet { namespace shaders {
 
     // index for texture sampler
     GLuint samplerIndex_;
+
+    // Used for transparency of textures
+    GLint alphaIndex_;
   public:
     void init() {
       // this is the vertex shader.
@@ -39,6 +42,7 @@ namespace octet { namespace shaders {
       const char fragment_shader[] = SHADER_STR(
         varying vec2 uv_;
         uniform sampler2D sampler;
+        uniform float alpha;
         void main() { gl_FragColor = texture2D(sampler, uv_); }
       );
     
@@ -49,15 +53,17 @@ namespace octet { namespace shaders {
       // extract the indices of the uniforms to use later
       modelToProjectionIndex_ = glGetUniformLocation(program(), "modelToProjection");
       samplerIndex_ = glGetUniformLocation(program(), "sampler");
+      alphaIndex_ = glGetUniformLocation(program(), "alpha");
     }
 
-    void render(const mat4t &modelToProjection, int sampler) {
+    void render(const mat4t &modelToProjection, int sampler, float alpha = 1) {
       // tell openGL to use the program
       shader::render();
 
       // customize the program with uniforms
       glUniform1i(samplerIndex_, sampler);
       glUniformMatrix4fv(modelToProjectionIndex_, 1, GL_FALSE, modelToProjection.get());
+      glUniform1f(alphaIndex_, alpha);
     }
   };
 }}
