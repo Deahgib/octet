@@ -218,11 +218,11 @@ namespace octet {
       last_sky_sprite = first_sky_sprite + 1,
 
       background_sprite_anchor, // used to scroll the background along.
+      enemy_despawn_anchor,
 
       // sprite definitions
       tank_sprite,
       gun_sprite,
-      game_over_sprite,
 
       first_plane_sprite,
       last_plane_sprite = first_plane_sprite + num_planes - 1,
@@ -241,6 +241,8 @@ namespace octet {
 
       first_enemy_anchor,
       last_enemy_anchor = first_enemy_anchor + num_rows - 1,
+
+      game_over_sprite,
 
       num_sprites,
 
@@ -268,7 +270,7 @@ namespace octet {
     int score_multiplier;
 
     // speed of enemy
-    float invader_velocity;
+    float enemy_velocity;
 
     // sounds
     ALuint whoosh;
@@ -307,6 +309,7 @@ namespace octet {
       else{
         if (enemy_schelude_it >= enemy_schedule.end()) {
           enemy_schelude_it = enemy_schedule.begin();
+          enemy_velocity -= 0.01f;
           //printf("Scheduler finished\n");
           return;
         }
@@ -419,7 +422,7 @@ namespace octet {
       }
       float x, y;
       sprites[tank_sprite].get_position(cameraToWorld, x, y);
-      sprites[gun_sprite].set_position(x, y+0.2f);
+      sprites[gun_sprite].set_position(x-0.02f, y+0.2f);
 
     }
 
@@ -562,17 +565,23 @@ namespace octet {
     }
 
     // move the array of enemies
-    void move_invaders() {
+    void move_enemies() {
       for (int j = 0; j != num_planes; ++j) {
-        sprite &invaderer = sprites[first_plane_sprite+j];
-        if (invaderer.is_enabled()) {
-          invaderer.translate(invader_velocity, 0);
+        sprite &plane = sprites[first_plane_sprite+j];
+        if (plane.is_enabled()) {
+          plane.translate(enemy_velocity, 0);
+          if (plane.collides_with(sprites[enemy_despawn_anchor])) { // CHANGE
+            plane.is_enabled() = false;
+          }
         }
       }
       for (int j = 0; j != num_blimps; ++j) {
         sprite &blimp = sprites[first_blimp_sprite + j];
         if (blimp.is_enabled()) {
-          blimp.translate(invader_velocity * 0.5f, 0);
+          blimp.translate(enemy_velocity * 0.5f, 0);
+          if (blimp.collides_with(sprites[enemy_despawn_anchor])) {
+            blimp.is_enabled() = false;
+          }
         }
       }
     }
@@ -696,14 +705,14 @@ namespace octet {
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
-      GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invaderer.gif");
+      GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/plane.gif");
       for (int i = 0; i != num_planes; ++i) {
         assert(first_plane_sprite + num_planes - 1 <= last_plane_sprite);
         sprites[first_plane_sprite + i ].init( invaderer, 0, 0, 0.45f, 0.25f);
         sprites[first_plane_sprite + i ].is_enabled() = false;
       }
 
-      GLint blimp = resource_dict::get_texture_handle(GL_RGB, "#ff0000");
+      GLint blimp = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/blimp.gif");
       for (int i = 0; i != num_blimps; ++i) {
         assert(first_blimp_sprite + num_blimps - 1 <= last_blimp_sprite);
         sprites[first_blimp_sprite + i].init(blimp, 0, 0, 0.65f, 0.45f);
@@ -718,14 +727,12 @@ namespace octet {
       sprites[first_border_sprite+3].init(white, 3.2f,  0, 0.2f, 6.4f);
 
       // background textures
-      GLint green = resource_dict::get_texture_handle(GL_RGB, "#a2fb25");
-      sprites[first_ground_sprite].init(green, 0, -2.4f, 6, 0.4f);
-      GLint redish = resource_dict::get_texture_handle(GL_RGB, "#ffa225");
-      sprites[last_ground_sprite].init(redish, 6, -2.4f, 6, 0.4f);
-      GLint blue = resource_dict::get_texture_handle(GL_RGB, "#0000ff");
-      sprites[first_sky_sprite].init(blue, 0, 0.4f, 6, 5.2f);
-      GLint blueish = resource_dict::get_texture_handle(GL_RGB, "#a2a2fe");
-      sprites[last_sky_sprite].init(blueish, 6, 0.4f, 6, 5.2f);
+      GLint ground = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/terrain.gif");
+      sprites[first_ground_sprite].init(ground, 0, -2.4f, 6, 0.4f);
+      sprites[last_ground_sprite].init(ground, 6, -2.4f, 6, 0.4f);
+      GLint sky = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/sky.gif");
+      sprites[first_sky_sprite].init(sky, 0, 0.4f, 6, 5.2f);
+      sprites[last_sky_sprite].init(sky, 6, 0.4f, 6, 5.2f);
 
       // use the missile texture
       GLuint missile = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/missile.gif");
@@ -743,12 +750,13 @@ namespace octet {
         sprites[first_bomb_sprite+i].is_enabled() = false;
       }
 
-      GLuint start_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
+      GLuint start_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/Start.gif");
       fadeout_sprites[start_sprite].init(start_msg, 0, 0, 3, 1.5f);
       fadeout_sprites[start_sprite].is_enabled() = true;
 
       // Anchors (Off screen)
       sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
+      sprites[enemy_despawn_anchor].init(white, -3.5f, 0, 0.2f, 6);
       for (int i = 0; i != num_rows; ++i) {
         sprites[first_enemy_anchor + i].init(white, 2.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
       }
@@ -768,7 +776,7 @@ namespace octet {
       // sundry counters and game state.
       missiles_disabled = 0;
       bombs_disabled = 50;
-      invader_velocity = -0.05f;
+      enemy_velocity = -0.05f;
       num_lives = 3;
       game_over = false;
       score = 0;
@@ -797,7 +805,7 @@ namespace octet {
 
       move_bombs();
 
-      move_invaders();
+      move_enemies();
 
       invaders_collide();
 
