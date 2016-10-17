@@ -43,7 +43,11 @@ namespace octet { namespace shaders {
         varying vec2 uv_;
         uniform sampler2D sampler;
         uniform float alpha;
-        void main() { gl_FragColor = texture2D(sampler, uv_); }
+        void main() { 
+          vec4 tex = texture2D(sampler, uv_);
+          if(tex.w != 0) tex.w *= alpha;
+          gl_FragColor = tex; 
+        }
       );
     
       // use the common shader code to compile and link the shaders
@@ -56,7 +60,7 @@ namespace octet { namespace shaders {
       alphaIndex_ = glGetUniformLocation(program(), "alpha");
     }
 
-    void render(const mat4t &modelToProjection, int sampler, float alpha = 1) {
+    void render(const mat4t &modelToProjection, int sampler, float alpha) {
       // tell openGL to use the program
       shader::render();
 

@@ -61,7 +61,7 @@ namespace octet {
       enabled = true;
     }
 
-    void render(texture_shader &shader, mat4t &cameraToWorld) {
+    void render(texture_shader &shader, mat4t &cameraToWorld, const float &alpha = 1) {
       // invisible sprite... used for gameplay.
       if (!texture || !is_enabled()) return;
 
@@ -76,7 +76,7 @@ namespace octet {
       // use "old skool" rendering
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      shader.render(modelToProjection, 0);
+      shader.render(modelToProjection, 0, alpha);
 
       // this is an array of the positions of the corners of the sprite in 3D
       // a straight "float" here means this array is being generated here at runtime.
@@ -169,6 +169,29 @@ namespace octet {
     }
   };
 
+  class fadeout_sprite : public sprite {
+    float alpha;
+    public:
+      fadeout_sprite() : sprite(){}
+      void init(int _texture, float x, float y, float w, float h){
+        sprite::init(_texture, x, y, w, h);
+        alpha = 1;
+      }
+      void render(texture_shader &shader, mat4t &cameraToWorld) {
+        if (alpha > 0) {
+          sprite::render(shader, cameraToWorld, alpha);
+          alpha -= 0.05f;
+        }
+        else {
+          is_enabled() = false;
+        }
+      }
+      void fade() {
+        is_enabled() = true;
+        alpha = 1;
+      }
+  };
+
   class invaderers_app : public octet::app {
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
@@ -223,6 +246,12 @@ namespace octet {
 
     };
 
+    enum {
+      num_fadeout_sprites = 1,
+      mum_powerups = 1,
+      start_sprite = 0,
+    };
+
     // timers for missiles and bombs
     int missiles_disabled;
     int bombs_disabled;
@@ -231,7 +260,6 @@ namespace octet {
     int screen_w, screen_h;
 
     // accounting for bad guys
-    int live_invaderers;
     int num_lives;
 
     // game state
@@ -250,6 +278,7 @@ namespace octet {
 
     // big array of sprites
     sprite sprites[num_sprites];
+    fadeout_sprite fadeout_sprites[num_fadeout_sprites];
 
     // random number generator
     class random randomizer;
@@ -359,17 +388,6 @@ namespace octet {
 
       score += score_multiplier;
       ++score_multiplier;
-
-      //invader_velocity *= 1.05f;
-
-      /*
-      if (live_invaderers == 4) {
-        //invader_velocity *= 4;
-      } else if (live_invaderers == 0) {
-        game_over = true;
-        sprites[game_over_sprite].translate(-20, 0);
-      }
-      */
     }
 
     // called when we are hit
@@ -593,7 +611,7 @@ namespace octet {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, font_texture);
 
-      shader.render(modelToProjection, 0);
+      shader.render(modelToProjection, 0, 1);
 
       glVertexAttribPointer(attribute_pos, 3, GL_FLOAT, GL_FALSE, sizeof(bitmap_font::vertex), (void*)&vertices[0].x );
       glEnableVertexAttribArray(attribute_pos);
@@ -725,6 +743,10 @@ namespace octet {
         sprites[first_bomb_sprite+i].is_enabled() = false;
       }
 
+      GLuint start_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
+      fadeout_sprites[start_sprite].init(start_msg, 0, 0, 3, 1.5f);
+      fadeout_sprites[start_sprite].is_enabled() = true;
+
       // Anchors (Off screen)
       sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
       for (int i = 0; i != num_rows; ++i) {
@@ -807,6 +829,11 @@ namespace octet {
       // draw all the sprites
       for (int i = 0; i != num_sprites; ++i) {
         sprites[i].render(texture_shader_, cameraToWorld);
+      }
+      for (int i = 0; i < num_fadeout_sprites; ++i) {
+        if (fadeout_sprites[i].is_enabled()) {
+          fadeout_sprites[i].render(texture_shader_, cameraToWorld);
+        }
       }
 
       char score_text[64];
