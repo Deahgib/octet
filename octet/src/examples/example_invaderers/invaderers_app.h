@@ -19,8 +19,12 @@
 // Edited by Louis Bennette 
 // 
 // Sound fire.wav supplied by http://soundbible.com/1326-Tank-Firing.html 
-// Texture tank & gun taken from : 
-//
+// Explode bang.wav suppiled by 
+// Textures:
+// tank & gun modified from : http://www.clipartlord.com/wp-content/uploads/2014/06/tank9.png Site: http://www.clipartlord.com/category/military-clip-art/tanks-clip-art/
+// Plane : http://www.clker.com/clipart-flying-cartoon-plane.html
+// Blimp : http://www.clipartpanda.com/clipart_images/add-this-clip-art-to-your-34326959
+// 
 
 namespace octet {
   class sprite {
@@ -204,7 +208,7 @@ namespace octet {
       num_sound_sources = 8,
       num_rows = 5,
       num_cols = 10,
-      num_missiles = 5,
+      num_missiles = 10,
       num_bombs = 2,
       num_borders = 4,
       num_planes = 10, // Number of sprites to pool
@@ -265,8 +269,15 @@ namespace octet {
     int missiles_disabled;
     int bombs_disabled;
 
+    // Screen Size (Viewport size NOT windows window size) and mouse coords
     int mouse_x, mouse_y;
     int screen_w, screen_h;
+
+    // Powerups used if powerups are active and for how long.
+    bool invinsible_active;
+    int invinsible_time;
+    bool attack_speed_active;
+    int attack_speed_time;
 
     // accounting for bad guys
     int num_lives;
@@ -448,7 +459,7 @@ namespace octet {
 
     }
 
-    // fire button (space)
+    // fire button (space) or Left click Mouse
     void fire_missiles() {
       if (missiles_disabled) {
         --missiles_disabled;
@@ -458,7 +469,7 @@ namespace octet {
           if (!sprites[first_missile_sprite+i].is_enabled()) {
             sprites[first_missile_sprite+i].set_relative(sprites[gun_sprite], 0, 0.5f);
             sprites[first_missile_sprite+i].is_enabled() = true;
-            missiles_disabled = 2;
+            missiles_disabled = (attack_speed_active ? 2 : 8);
             ALuint source = get_sound_source();
             alSourcei(source, AL_BUFFER, whoosh);
             alSourcePlay(source);
@@ -609,16 +620,6 @@ namespace octet {
       }
     }
 
-    // check if any invaders hit the sides.
-    void invaders_collide() {
-      for (int j = 0; j != num_planes; ++j) {
-        sprite &invaderer = sprites[first_plane_sprite+j];
-        if (invaderer.is_enabled() && invaderer.collides_with(sprites[background_sprite_anchor])) {
-          invaderer.is_enabled() = false;
-        }
-      }
-    }
-
 
     void draw_text(texture_shader &shader, float x, float y, float scale, const char *text) {
       mat4t modelToWorld;
@@ -715,6 +716,9 @@ namespace octet {
         if (sprites[upgrade_atkspeed_sprite].collides_with(sprites[tank_sprite])) {
           sprites[upgrade_atkspeed_sprite].is_enabled() = false;
           fadeout_sprites[atkspeed_msg_sprite].fade();
+          attack_speed_active = true;
+          attack_speed_time = 250;
+          missiles_disabled = 0;
         }
       }
       if (sprites[upgrade_invins_sprite].is_enabled()) {
@@ -722,6 +726,23 @@ namespace octet {
         if (sprites[upgrade_invins_sprite].collides_with(sprites[tank_sprite])) {
           sprites[upgrade_invins_sprite].is_enabled() = false;
           fadeout_sprites[invinsible_msg_sprite].fade();
+          invinsible_active = true;
+          invinsible_time = 250;
+        }
+      }
+    }
+
+    void update_upgrades() {
+      if (attack_speed_active) {
+        --attack_speed_time;
+        if (attack_speed_time < 0) {
+          attack_speed_active = false;
+        }
+      }
+      if (invinsible_active) {
+        --invinsible_time;
+        if (invinsible_time < 0) {
+          invinsible_active = false;
         }
       }
     }
@@ -843,6 +864,8 @@ namespace octet {
       app_common::get_viewport_size(screen_w, screen_h);
 
       // sundry counters and game state.
+      invinsible_active = false;
+      attack_speed_active = false;
       missiles_disabled = 0;
       bombs_disabled = 50;
       enemy_velocity = -0.05f;
@@ -858,9 +881,9 @@ namespace octet {
         return;
       }
 
-      move_ship();
-
       spawn_enemies();
+
+      move_ship();
 
       do_shoot_angle();
 
@@ -868,17 +891,17 @@ namespace octet {
 
       fire_bombs();
 
-	    move_background();
-
       move_missiles();
 
       move_bombs();
 
       move_enemies();
 
+      move_background();
+
       move_upgrades();
 
-      invaders_collide();
+      update_upgrades();
 
     }
 
@@ -909,6 +932,8 @@ namespace octet {
       for (int i = 0; i != num_sprites; ++i) {
         sprites[i].render(texture_shader_, cameraToWorld);
       }
+
+      // Fadeout rendering
       for (int i = 0; i < num_fadeout_sprites; ++i) {
         if (fadeout_sprites[i].is_enabled()) {
           fadeout_sprites[i].render(texture_shader_, cameraToWorld);
