@@ -236,11 +236,16 @@ namespace octet {
       first_bomb_sprite,
       last_bomb_sprite = first_bomb_sprite + num_bombs - 1,
 
+      upgrade_invins_sprite,
+      upgrade_atkspeed_sprite,
+      upgrade_lifeup_sprite,
+
       first_border_sprite,
       last_border_sprite = first_border_sprite + num_borders - 1,
 
       first_enemy_anchor,
       last_enemy_anchor = first_enemy_anchor + num_rows - 1,
+      upgrade_anchor,
 
       game_over_sprite,
 
@@ -249,9 +254,11 @@ namespace octet {
     };
 
     enum {
-      num_fadeout_sprites = 1,
-      mum_powerups = 1,
+      num_fadeout_sprites = 4,
       start_sprite = 0,
+      invinsible_msg_sprite,
+      atkspeed_msg_sprite,
+      lifeup_msg_sprite
     };
 
     // timers for missiles and bombs
@@ -296,49 +303,63 @@ namespace octet {
     // Enemy spawning schedule
     struct spawn_time {
       int time; // nb of frames between previous spawn and this spawn
-      int enemy_type; // 1 = plane, 2 = blimp 
+      int type; // 1 = plane, 2 = blimp, 3 = life up, 4 = attack speed +, 5 = invinsibility
       int spawn_anchor; // index 0 to 4
     };
     int spawning_disabled;
-    std::vector<spawn_time> enemy_schedule;
-    std::vector<spawn_time>::iterator enemy_schelude_it;
+    std::vector<spawn_time> entity_schedule;
+    std::vector<spawn_time>::iterator entity_schelude_it;
     void spawn_enemies() {
       if (spawning_disabled > 0) {
         --spawning_disabled;
       }
       else{
-        if (enemy_schelude_it >= enemy_schedule.end()) {
-          enemy_schelude_it = enemy_schedule.begin();
+        if (entity_schelude_it >= entity_schedule.end()) {
+          entity_schelude_it = entity_schedule.begin();
           enemy_velocity -= 0.01f;
           //printf("Scheduler finished\n");
           return;
         }
         // Do plane sprites
-        if ((*enemy_schelude_it).enemy_type == 1) {
+        if ((*entity_schelude_it).type == 1) { // PLANES
           for (int i = 0; i < num_planes; ++i) {
             if (!sprites[first_plane_sprite + i].is_enabled()) {
-              sprites[first_plane_sprite + i].set_relative(sprites[first_enemy_anchor + (*enemy_schelude_it).spawn_anchor],0,0);
+              sprites[first_plane_sprite + i].set_relative(sprites[first_enemy_anchor + (*entity_schelude_it).spawn_anchor],0,0);
               sprites[first_plane_sprite + i].is_enabled() = true;
-              // Play sound
-
               break;
             }
           }
         }
-        else if ((*enemy_schelude_it).enemy_type == 2) {
+        else if ((*entity_schelude_it).type == 2) { // BLIMPS
           for (int i = 0; i < num_blimps; ++i) {
             if (!sprites[first_blimp_sprite + i].is_enabled()) {
-              sprites[first_blimp_sprite + i].set_relative(sprites[first_enemy_anchor + (*enemy_schelude_it).spawn_anchor], 0, 0);
+              sprites[first_blimp_sprite + i].set_relative(sprites[first_enemy_anchor + (*entity_schelude_it).spawn_anchor], 0, 0);
               sprites[first_blimp_sprite + i].is_enabled() = true;
-              // Play sound
-
               break;
             }
           }
         }
+        else if((*entity_schelude_it).type == 3) { // LIFE UP upgrade
+          if (!sprites[upgrade_lifeup_sprite].is_enabled()) {
+            sprites[upgrade_lifeup_sprite].set_relative(sprites[upgrade_anchor], 0, 0);
+            sprites[upgrade_lifeup_sprite].is_enabled() = true;
+          }
+        }
+        else if ((*entity_schelude_it).type == 4) { // ATTACK SPEED upgrade
+          if (!sprites[upgrade_atkspeed_sprite].is_enabled()) {
+            sprites[upgrade_atkspeed_sprite].set_relative(sprites[upgrade_anchor], 0, 0);
+            sprites[upgrade_atkspeed_sprite].is_enabled() = true;
+          }
+        }
+        else if ((*entity_schelude_it).type == 5) { // INVINSIBILITY upgrade
+          if (!sprites[upgrade_invins_sprite].is_enabled()) {
+            sprites[upgrade_invins_sprite].set_relative(sprites[upgrade_anchor], 0, 0);
+            sprites[upgrade_invins_sprite].is_enabled() = true;
+          }
+        }
 
-        spawning_disabled = (*enemy_schelude_it).time;
-        ++enemy_schelude_it;
+        spawning_disabled = (*entity_schelude_it).time;
+        ++entity_schelude_it;
       }
     }
 
@@ -368,7 +389,7 @@ namespace octet {
             enemy.time = std::atoi(b);
           }
           else if (col == 1) {
-            enemy.enemy_type = std::atoi(b);
+            enemy.type = std::atoi(b);
           }
           else if (col == 2) {
             enemy.spawn_anchor = std::atoi(b);
@@ -377,10 +398,11 @@ namespace octet {
           if (*e != ',') break;
           b = e + 1;
         }
-        enemy_schedule.push_back(enemy);
-        //printf("enemy: %i | %i | %i\n", enemy.time, enemy.enemy_type, enemy.spawn_anchor);
+
+        entity_schedule.push_back(enemy);
+        //printf("enemy: %i | %i | %i\n", enemy.time, enemy.type, enemy.spawn_anchor);
       }
-      enemy_schelude_it = enemy_schedule.begin();
+      entity_schelude_it = entity_schedule.begin();
     }
 
     // called when we hit an enemy
@@ -560,7 +582,7 @@ namespace octet {
             bomb.translate(20, 0);
           }
         }
-      next_bomb:;
+        next_bomb:;
       }
     }
 
@@ -581,6 +603,7 @@ namespace octet {
           blimp.translate(enemy_velocity * 0.5f, 0);
           if (blimp.collides_with(sprites[enemy_despawn_anchor])) {
             blimp.is_enabled() = false;
+
           }
         }
       }
@@ -678,6 +701,31 @@ namespace octet {
       
     }
 
+    void move_upgrades() {
+      if (sprites[upgrade_lifeup_sprite].is_enabled()) {
+        sprites[upgrade_lifeup_sprite].translate(-0.05f, 0);
+        if (sprites[upgrade_lifeup_sprite].collides_with(sprites[tank_sprite])) {
+          sprites[upgrade_lifeup_sprite].is_enabled() = false;
+          fadeout_sprites[lifeup_msg_sprite].fade();
+          ++num_lives;
+        }
+      }
+      if (sprites[upgrade_atkspeed_sprite].is_enabled()) {
+        sprites[upgrade_atkspeed_sprite].translate(-0.05f, 0);
+        if (sprites[upgrade_atkspeed_sprite].collides_with(sprites[tank_sprite])) {
+          sprites[upgrade_atkspeed_sprite].is_enabled() = false;
+          fadeout_sprites[atkspeed_msg_sprite].fade();
+        }
+      }
+      if (sprites[upgrade_invins_sprite].is_enabled()) {
+        sprites[upgrade_invins_sprite].translate(-0.05f, 0);
+        if (sprites[upgrade_invins_sprite].collides_with(sprites[tank_sprite])) {
+          sprites[upgrade_invins_sprite].is_enabled() = false;
+          fadeout_sprites[invinsible_msg_sprite].fade();
+        }
+      }
+    }
+
   public:
 
     // this is called when we construct the class
@@ -705,10 +753,10 @@ namespace octet {
       GLuint GameOver = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/GameOver.gif");
       sprites[game_over_sprite].init(GameOver, 20, 0, 3, 1.5f);
 
-      GLuint invaderer = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/plane.gif");
+      GLuint plane = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/plane.gif");
       for (int i = 0; i != num_planes; ++i) {
         assert(first_plane_sprite + num_planes - 1 <= last_plane_sprite);
-        sprites[first_plane_sprite + i ].init( invaderer, 0, 0, 0.45f, 0.25f);
+        sprites[first_plane_sprite + i ].init(plane, 0, 0, 0.45f, 0.25f);
         sprites[first_plane_sprite + i ].is_enabled() = false;
       }
 
@@ -750,13 +798,34 @@ namespace octet {
         sprites[first_bomb_sprite+i].is_enabled() = false;
       }
 
+      GLuint lifeup = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/lifeup.gif");
+      sprites[upgrade_lifeup_sprite].init(lifeup, 20, 0, 0.25f, 0.25f);
+      sprites[upgrade_lifeup_sprite].is_enabled() = false;
+      GLuint atkspeed = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/atkspeed.gif");
+      sprites[upgrade_atkspeed_sprite].init(atkspeed, 20, 0, 0.25f, 0.25f);
+      sprites[upgrade_atkspeed_sprite].is_enabled() = false;
+      GLuint invins = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/invinsibility.gif");
+      sprites[upgrade_invins_sprite].init(invins, 20, 0, 0.25f, 0.25f);
+      sprites[upgrade_invins_sprite].is_enabled() = false;
+
+      // Fade out messages
       GLuint start_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/Start.gif");
       fadeout_sprites[start_sprite].init(start_msg, 0, 0, 3, 1.5f);
       fadeout_sprites[start_sprite].is_enabled() = true;
+      GLuint lifeup_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/LifeUpMsg.gif");
+      fadeout_sprites[lifeup_msg_sprite].init(lifeup_msg, 0, 0, 3, 1.5f);
+      fadeout_sprites[lifeup_msg_sprite].is_enabled() = false;
+      GLuint atkspeed_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/AttackSpeed.gif");
+      fadeout_sprites[atkspeed_msg_sprite].init(atkspeed_msg, 0, 0, 3, 1.5f);
+      fadeout_sprites[atkspeed_msg_sprite].is_enabled() = false;
+      GLuint invinsible_msg = resource_dict::get_texture_handle(GL_RGBA, "assets/invaderers/Invinsible.gif");
+      fadeout_sprites[invinsible_msg_sprite].init(invinsible_msg, 0, 0, 3, 1.5f);
+      fadeout_sprites[invinsible_msg_sprite].is_enabled() = false;
 
       // Anchors (Off screen)
       sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
       sprites[enemy_despawn_anchor].init(white, -3.5f, 0, 0.2f, 6);
+      sprites[upgrade_anchor].init(white, 2.5f, -2.05f, 0.25f, 0.25f);
       for (int i = 0; i != num_rows; ++i) {
         sprites[first_enemy_anchor + i].init(white, 2.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
       }
@@ -806,6 +875,8 @@ namespace octet {
       move_bombs();
 
       move_enemies();
+
+      move_upgrades();
 
       invaders_collide();
 
