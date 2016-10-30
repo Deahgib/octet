@@ -41,6 +41,9 @@ namespace octet {
       mat.translate(0, -4, 0);
       app_scene->add_shape(mat, new mesh_box(vec3(200, 1, 200)), green, false);
 
+      // TODO :Load player capsule mesh and attach the camera as a child node to the player rigidbody. Then modify 
+      // movement code for the player rigid body
+
       std::vector<mesh_instance*> plank_meshes;
       for (int i = 0; i < 10; ++i) {
         mat.loadIdentity();
@@ -95,10 +98,27 @@ namespace octet {
 
     }
 
+    void move_camera() {
+      if (is_key_down(key_w)) {
+        app_scene->get_camera_instance(0)->get_node()->translate(vec3(0,0,-1));
+      }
+      if (is_key_down(key_s)) {
+        app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 0, 1));
+      }
+      if (is_key_down(key_a)) {
+        app_scene->get_camera_instance(0)->get_node()->rotate(5, vec3(0,1,0));
+      }
+      if (is_key_down(key_d)) {
+        app_scene->get_camera_instance(0)->get_node()->rotate(-5, vec3(0, 1, 0));
+      }
+    }
+
     /// this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
+
+      move_camera();
 
       if (is_key_going_up(key_space)) {
         material *white = new material(vec4(0, 0.3f, 0, 1));
