@@ -334,6 +334,24 @@ namespace octet { namespace scene {
       return result;
     }
 
+    #ifdef OCTET_BULLET
+    void addHingeConstraint(btRigidBody &body1, btVector3 &pivot, btVector3 &axis, const bool &useReferanceFrameA) {
+      btHingeConstraint *hinge = new btHingeConstraint(body1, pivot, axis, useReferanceFrameA);
+      world->addConstraint(hinge);
+    }
+
+    void addSpringConstraint(btRigidBody &rbA, btRigidBody &rbB, const btTransform &frameInA, const btTransform &frameInB) {
+      btGeneric6DofSpringConstraint* spring = new btGeneric6DofSpringConstraint(rbA, rbB, frameInA, frameInB, true);
+      spring->setLinearLowerLimit(btVector3(0, 0, 0));
+      spring->setLinearUpperLimit(btVector3(0.2f, 0, 0));
+      spring->setDamping(1, 0.9f);
+      spring->setStiffness(1, btScalar(10));
+      spring->enableSpring(1, true);
+
+      world->addConstraint(spring);
+    }
+    #endif
+
     /// Serialization
     void visit(visitor &v) {
       scene_node::visit(v);

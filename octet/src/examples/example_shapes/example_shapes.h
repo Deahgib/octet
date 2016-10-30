@@ -23,32 +23,94 @@ namespace octet {
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 4, 0));
 
-      material *red = new material(vec4(1, 0, 0, 1));
+      material *red = new material(vec4(0.4f, 0, 0.4f, 1));
       material *green = new material(vec4(0, 1, 0, 1));
       material *blue = new material(vec4(0, 0, 1, 1));
+      material *brown = new material(vec4(1, 0.6f, 0, 1));
 
       mat4t mat;
-      mat.translate(-3, 6, 0);
-      app_scene->add_shape(mat, new mesh_sphere(vec3(2, 2, 2), 2), red, true);
+      mat.translate(-10, 0, 0);
+      mesh_instance *leftAnchor = app_scene->add_shape(mat, new mesh_box(vec3(2, 4, 6)), red, false);
 
       mat.loadIdentity();
-      mat.translate(0, 10, 0);
-      app_scene->add_shape(mat, new mesh_box(vec3(2, 2, 2)), red, true);
-
-      mat.loadIdentity();
-      mat.translate( 3, 6, 0);
-      app_scene->add_shape(mat, new mesh_cylinder(zcylinder(vec3(0, 0, 0), 2, 4)), blue, true);
+      mat.translate(10, 0, 0);
+      mesh_instance *rightAnchor = app_scene->add_shape(mat, new mesh_box(vec3(2, 4, 6)), red, false);
 
       // ground
       mat.loadIdentity();
-      mat.translate(0, -1, 0);
+      mat.translate(0, -4, 0);
       app_scene->add_shape(mat, new mesh_box(vec3(200, 1, 200)), green, false);
+
+      std::vector<mesh_instance*> plank_meshes;
+      for (int i = 0; i < 10; ++i) {
+        mat.loadIdentity();
+        mat.translate(-10 + (i*2), 4, 0);
+        mesh_instance* temp = app_scene->add_shape(mat, new mesh_box(vec3(0.8f, 0.05f, 4)), brown, true);
+        plank_meshes.push_back(temp);
+      }
+
+      btTransform localA = btTransform::getIdentity();
+      localA.setOrigin(get_btVector3(vec3(0.75f, 0, 3.5f)));
+      btTransform localB = btTransform::getIdentity();
+      localB.setOrigin(get_btVector3(vec3(-0.75f, 0, 3.5f)));
+      btTransform localC = btTransform::getIdentity();
+      localC.setOrigin(get_btVector3(vec3(0.75f, 0, -3.5f)));
+      btTransform localD = btTransform::getIdentity();
+      localD.setOrigin(get_btVector3(vec3(-0.75f, 0, -3.5f)));
+      // Tie up all the planks left to right
+      for (int i = 0; i < 9; ++i) {
+        btRigidBody* rbLeft = plank_meshes[i]->get_node()->get_rigid_body();
+        btRigidBody* rbRight = plank_meshes[i+1]->get_node()->get_rigid_body();
+        app_scene->addSpringConstraint(*rbLeft, *rbRight, localA, localB);
+        app_scene->addSpringConstraint(*rbLeft, *rbRight, localC, localD);
+      }
+
+      localA = btTransform::getIdentity();
+      localA.setOrigin(get_btVector3(vec3(2, 4, 3.5f)));
+      localB = btTransform::getIdentity();
+      localB.setOrigin(get_btVector3(vec3(-0.75f, 0, 3.5f)));
+      localC = btTransform::getIdentity();
+      localC.setOrigin(get_btVector3(vec3(2, 4, -3.5f)));
+      localD = btTransform::getIdentity();
+      localD.setOrigin(get_btVector3(vec3(-0.75f, 0, -3.5f)));
+
+      btRigidBody *leftAnchorRB = leftAnchor->get_node()->get_rigid_body();
+      btRigidBody *firstPlank = plank_meshes[0]->get_node()->get_rigid_body();
+      app_scene->addSpringConstraint(*leftAnchorRB, *firstPlank, localA, localB);
+      app_scene->addSpringConstraint(*leftAnchorRB, *firstPlank, localC, localD);
+
+      localA = btTransform::getIdentity();
+      localA.setOrigin(get_btVector3(vec3(0.75f, 0, 3.5f)));
+      localB = btTransform::getIdentity();
+      localB.setOrigin(get_btVector3(vec3(-2, 4, 3.5f)));
+      localC = btTransform::getIdentity();
+      localC.setOrigin(get_btVector3(vec3(0.75f, 0, -3.5f)));
+      localD = btTransform::getIdentity();
+      localD.setOrigin(get_btVector3(vec3(-2, 4, -3.5f)));
+
+      btRigidBody *lastPlank = plank_meshes[plank_meshes.size()-1]->get_node()->get_rigid_body();
+      btRigidBody *rightAnchorRB = rightAnchor->get_node()->get_rigid_body();
+      app_scene->addSpringConstraint(*lastPlank, *rightAnchorRB, localA, localB);
+      app_scene->addSpringConstraint(*lastPlank, *rightAnchorRB, localC, localD);
+
     }
 
     /// this is called to draw the world
     void draw_world(int x, int y, int w, int h) {
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
+
+      if (is_key_going_up(key_space)) {
+        material *white = new material(vec4(0, 0.3f, 0, 1));
+        mat4t mat;
+        mat.translate(7, 20, 0);
+        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), white, true);
+        // Don't abuse! Those spheres will stick around in memory :D
+      }
+
+      glClearColor(0, 0, 1, 1);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
       app_scene->begin_render(vx, vy);
 
       // update matrices. assume 30 fps.

@@ -62,11 +62,12 @@ namespace octet {
     key_ctrl,
     key_alt,
 
-    key_r = 114,
-    key_w = 119,
-    key_a = 97,
-    key_s = 115,
-    key_d = 100,
+    // Keys require ASCII VAL - 32 
+    key_r = 114-32,
+    key_w = 119-32,
+    key_a = 97-32,
+    key_s = 115-32,
+    key_d = 100-32,
 
     // mouse buttons
     key_lmb,

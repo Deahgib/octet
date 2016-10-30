@@ -19,7 +19,7 @@
 // Edited by Louis Bennette 
 // 
 // Sound fire.wav supplied by http://soundbible.com/1326-Tank-Firing.html 
-// Explode bang.wav suppiled by 
+// Explode bang.wav suppiled by http://soundbible.com/538-Blast.html
 // Textures:
 // tank & gun modified from : http://www.clipartlord.com/wp-content/uploads/2014/06/tank9.png Site: http://www.clipartlord.com/category/military-clip-art/tanks-clip-art/
 // Plane : http://www.clker.com/clipart-flying-cartoon-plane.html
@@ -442,12 +442,12 @@ namespace octet {
     void move_ship() {
       const float ship_speed = 0.05f;
       // left and right arrows
-      if (is_key_down(key_left) || is_key_down('a')) {
+      if (is_key_down(key_left) || is_key_down(key_a)) {
         sprites[tank_sprite].translate(-ship_speed, 0);
         if (sprites[tank_sprite].collides_with(sprites[first_border_sprite+2])) {
           sprites[tank_sprite].translate(+ship_speed, 0);
         }
-      } else if (is_key_down(key_right) || is_key_down('d')) {
+      } else if (is_key_down(key_right) || is_key_down(key_d)) {
         sprites[tank_sprite].translate(+ship_speed, 0);
         if (sprites[tank_sprite].collides_with(sprites[first_border_sprite+3])) {
           sprites[tank_sprite].translate(-ship_speed, 0);
@@ -467,6 +467,7 @@ namespace octet {
         // find a missile
         for (int i = 0; i != num_missiles; ++i) {
           if (!sprites[first_missile_sprite+i].is_enabled()) {
+            // Set the missle to be relative to the gun of the tank so it follows the direction the gun is pointing.
             sprites[first_missile_sprite+i].set_relative(sprites[gun_sprite], 0, 0.5f);
             sprites[first_missile_sprite+i].is_enabled() = true;
             missiles_disabled = (attack_speed_active ? 2 : 8);
@@ -597,7 +598,7 @@ namespace octet {
       }
     }
 
-    // move the array of enemies
+    // move the array of enemies (Two types of enemies blimps and planes)
     void move_enemies() {
       for (int j = 0; j != num_planes; ++j) {
         sprite &plane = sprites[first_plane_sprite+j];
@@ -605,6 +606,7 @@ namespace octet {
           plane.translate(enemy_velocity, 0);
           if (plane.collides_with(sprites[enemy_despawn_anchor])) { // CHANGE
             plane.is_enabled() = false;
+            --num_lives;
           }
         }
       }
@@ -614,7 +616,7 @@ namespace octet {
           blimp.translate(enemy_velocity * 0.5f, 0);
           if (blimp.collides_with(sprites[enemy_despawn_anchor])) {
             blimp.is_enabled() = false;
-
+            --num_lives;
           }
         }
       }
@@ -655,25 +657,26 @@ namespace octet {
     }
 
 	  void move_background() {
-		  sprites[first_ground_sprite].translate(-0.05f, 0);
-		  sprites[last_ground_sprite].translate(-0.05f, 0);
-      sprites[first_sky_sprite].translate(-0.025f, 0);
-      sprites[last_sky_sprite].translate(-0.025f, 0);
+		sprites[first_ground_sprite].translate(-0.05f, 0);
+		sprites[last_ground_sprite].translate(-0.05f, 0);
+        sprites[first_sky_sprite].translate(-0.025f, 0);
+        sprites[last_sky_sprite].translate(-0.025f, 0);
 
-      if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
-        sprites[first_ground_sprite].translate(12,0);
-      }
-      else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
-        sprites[last_ground_sprite].translate(12, 0);
-      }
-      if (sprites[first_sky_sprite].collides_with(sprites[background_sprite_anchor])) {
-        sprites[first_sky_sprite].translate(12, 0);
-      }
-      else if (sprites[last_sky_sprite].collides_with(sprites[background_sprite_anchor])) {
-        sprites[last_sky_sprite].translate(12, 0);
-      }
+        if (sprites[first_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
+          sprites[first_ground_sprite].translate(12,0);
+        }
+        else if (sprites[last_ground_sprite].collides_with(sprites[background_sprite_anchor])) {
+          sprites[last_ground_sprite].translate(12, 0);
+        }
+        if (sprites[first_sky_sprite].collides_with(sprites[background_sprite_anchor])) {
+          sprites[first_sky_sprite].translate(12, 0);
+        }
+        else if (sprites[last_sky_sprite].collides_with(sprites[background_sprite_anchor])) {
+          sprites[last_sky_sprite].translate(12, 0);
+        }
 	  }
 
+      // This function calculates the angle the tank's gun should point so it's always pointing to where the cursor is on screen
     void do_shoot_angle() {
       app_common::get_mouse_pos(mouse_x, mouse_y);
       float mouse_coord_x = (((float)(mouse_x)-((float)(screen_w) * 0.5f)) / ((float)(screen_w) * 0.5f)) * 3; // Map the mouse coords on the screen with boundaries -3 to 3 for x and y
@@ -702,6 +705,7 @@ namespace octet {
       
     }
 
+    // This functions scrolls the upgrades left. The player is guarantied to get the upgrade
     void move_upgrades() {
       if (sprites[upgrade_lifeup_sprite].is_enabled()) {
         sprites[upgrade_lifeup_sprite].translate(-0.05f, 0);
@@ -732,6 +736,8 @@ namespace octet {
       }
     }
 
+    // This function counts down the duration of an active upgrade on the player and removes the upgrade once the 
+    // time has elapsed
     void update_upgrades() {
       if (attack_speed_active) {
         --attack_speed_time;
@@ -846,9 +852,9 @@ namespace octet {
       // Anchors (Off screen)
       sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
       sprites[enemy_despawn_anchor].init(white, -3.5f, 0, 0.2f, 6);
-      sprites[upgrade_anchor].init(white, 2.5f, -2.05f, 0.25f, 0.25f);
+      sprites[upgrade_anchor].init(white, 3.5f, -2.05f, 0.25f, 0.25f);
       for (int i = 0; i != num_rows; ++i) {
-        sprites[first_enemy_anchor + i].init(white, 2.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
+        sprites[first_enemy_anchor + i].init(white, 3.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
       }
 
       // sounds
@@ -859,9 +865,6 @@ namespace octet {
 
       load_level();
       spawning_disabled = 50;
-
-      // Local values for viewport
-      app_common::get_viewport_size(screen_w, screen_h);
 
       // sundry counters and game state.
       invinsible_active = false;
@@ -909,11 +912,13 @@ namespace octet {
     void draw_world(int x, int y, int w, int h) {
       simulate();
 
-	    if (game_over && is_key_going_up(key_enter)) {
-		    app_init();
-		    return;
-	    }
+	  if (game_over && is_key_going_up(key_enter)) {
+		  app_init();
+		  return;
+	  }
 
+      // Local values for viewport
+      app_common::get_viewport_size(screen_w, screen_h);
       // set a viewport - includes whole window area
       glViewport(x, y, w, h);
 
