@@ -347,10 +347,12 @@ namespace octet { namespace scene {
       spring->setDamping(1, 0.9f);
       spring->setStiffness(1, btScalar(10));
       spring->enableSpring(1, true);
-
+      
       world->addConstraint(spring);
+      
     }
-    #endif
+    #endif // OCTET_BULLET
+
 
     /// Serialization
     void visit(visitor &v) {
