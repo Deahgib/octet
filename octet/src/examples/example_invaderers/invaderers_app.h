@@ -27,31 +27,9 @@
 // 
 
 #include "sprite.h";
+#include "fadeout_sprite.h";
 
 namespace octet {
-  class fadeout_sprite : public sprite {
-    float alpha;
-    public:
-      fadeout_sprite() : sprite(){}
-      void init(int _texture, float x, float y, float w, float h){
-        sprite::init(_texture, x, y, w, h);
-        alpha = 1;
-      }
-      void render(texture_shader &shader, mat4t &cameraToWorld) {
-        if (alpha > 0) {
-          sprite::render(shader, cameraToWorld, alpha);
-          alpha -= 0.05f;
-        }
-        else {
-          is_enabled() = false;
-        }
-      }
-      void fade() {
-        is_enabled() = true;
-        alpha = 1;
-      }
-  };
-
   class invaderers_app : public octet::app {
     // Matrix to transform points in our camera space to the world.
     // This lets us move our camera
@@ -109,16 +87,15 @@ namespace octet {
 
       game_over_sprite,
 
-      num_sprites,
-
+      num_sprites
     };
 
     enum {
-      num_fadeout_sprites = 4,
       start_sprite = 0,
       invinsible_msg_sprite,
       atkspeed_msg_sprite,
-      lifeup_msg_sprite
+      lifeup_msg_sprite,
+      num_fadeout_sprites
     };
 
     // timers for missiles and bombs
