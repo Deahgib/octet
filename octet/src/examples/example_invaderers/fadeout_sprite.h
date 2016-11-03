@@ -1,8 +1,6 @@
-#include "sprite.h"
-
-
 namespace octet {
   class fadeout_sprite : public sprite {
+  private:
     float alpha;
   public:
     fadeout_sprite() : sprite() {}
@@ -13,7 +11,7 @@ namespace octet {
     void render(texture_shader &shader, mat4t &cameraToWorld) {
       if (alpha > 0) {
         sprite::render(shader, cameraToWorld, alpha);
-        alpha -= 0.05f;
+        alpha -= 0.025f;
       }
       else {
         is_enabled() = false;

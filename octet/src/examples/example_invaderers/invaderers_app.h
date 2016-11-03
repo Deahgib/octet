@@ -24,10 +24,10 @@
 // tank & gun modified from : http://www.clipartlord.com/wp-content/uploads/2014/06/tank9.png Site: http://www.clipartlord.com/category/military-clip-art/tanks-clip-art/
 // Plane : http://www.clker.com/clipart-flying-cartoon-plane.html
 // Blimp : http://www.clipartpanda.com/clipart_images/add-this-clip-art-to-your-34326959
-// 
+// The rest of the art assets are original creations mocked up in photoshop
 
-#include "sprite.h";
-#include "fadeout_sprite.h";
+#include "sprite.h"
+#include "fadeout_sprite.h"
 
 namespace octet {
   class invaderers_app : public octet::app {
@@ -437,9 +437,12 @@ namespace octet {
         sprite &plane = sprites[first_plane_sprite+j];
         if (plane.is_enabled()) {
           plane.translate(enemy_velocity, 0);
-          if (plane.collides_with(sprites[enemy_despawn_anchor])) { // CHANGE
+          if (plane.collides_with(sprites[enemy_despawn_anchor])) {
             plane.is_enabled() = false;
-            --num_lives;
+            if (--num_lives == 0) {
+              game_over = true;
+              sprites[game_over_sprite].translate(-20, 0);
+            }
           }
         }
       }
@@ -449,7 +452,10 @@ namespace octet {
           blimp.translate(enemy_velocity * 0.5f, 0);
           if (blimp.collides_with(sprites[enemy_despawn_anchor])) {
             blimp.is_enabled() = false;
-            --num_lives;
+            if (--num_lives == 0) {
+              game_over = true;
+              sprites[game_over_sprite].translate(-20, 0);
+            }
           }
         }
       }
