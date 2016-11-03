@@ -195,7 +195,7 @@ namespace octet {
             sprites[upgrade_atkspeed_sprite].is_enabled() = true;
           }
         }
-        else if ((*entity_schelude_it).type == 5) { // INVINSIBILITY upgrade
+        else if ((*entity_schelude_it).type == 5) { // INVINSIBILITY upgrade (Not yet implemented! :D )
           if (!sprites[upgrade_invins_sprite].is_enabled()) {
             sprites[upgrade_invins_sprite].set_relative(sprites[upgrade_anchor], 0, 0);
             sprites[upgrade_invins_sprite].is_enabled() = true;
@@ -691,7 +691,7 @@ namespace octet {
       // Anchors (Off screen)
       sprites[background_sprite_anchor].init(white, -9.1f, 0, 0.2f, 6);
       sprites[enemy_despawn_anchor].init(white, -3.5f, 0, 0.2f, 6);
-      sprites[upgrade_anchor].init(white, 3.5f, -2.05f, 0.25f, 0.25f);
+      sprites[upgrade_anchor].init(white, 3.5f, -2.1f, 0.25f, 0.25f);
       for (int i = 0; i != num_rows; ++i) {
         sprites[first_enemy_anchor + i].init(white, 3.5f, 2.5f - 0.5f*i, 0.2f, 0.2f);
       }
