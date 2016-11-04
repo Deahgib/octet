@@ -1,3 +1,4 @@
+
 namespace octet {
   class fadeout_sprite : public sprite {
   private:

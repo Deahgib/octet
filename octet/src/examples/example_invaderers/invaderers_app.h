@@ -148,7 +148,7 @@ namespace octet {
     struct spawn_time {
       int time; // nb of frames between previous spawn and this spawn
       int type; // 1 = plane, 2 = blimp, 3 = life up, 4 = attack speed +, 5 = invinsibility
-      int spawn_anchor; // index 0 to 4
+      int spawn_anchor; // index 0 to 4, 0 is topmost anchor
     };
     int spawning_disabled;
     std::vector<spawn_time> entity_schedule;
