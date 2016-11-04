@@ -335,6 +335,12 @@ namespace octet { namespace scene {
     }
 
     #ifdef OCTET_BULLET
+
+    void addHingeConstraint(btRigidBody& rbA, btRigidBody& rbB, const btVector3& pivotInA, const btVector3& pivotInB, btVector3& axisInA, btVector3& axisInB, bool useReferenceFrameA = false) {
+      btHingeConstraint *hinge = new btHingeConstraint(rbA, rbB, pivotInA, pivotInB, axisInA, axisInB, useReferenceFrameA);
+      world->addConstraint(hinge);
+    }
+
     void addHingeConstraint(btRigidBody &body1, btVector3 &pivot, btVector3 &axis, const bool &useReferanceFrameA) {
       btHingeConstraint *hinge = new btHingeConstraint(body1, pivot, axis, useReferanceFrameA);
       world->addConstraint(hinge);
