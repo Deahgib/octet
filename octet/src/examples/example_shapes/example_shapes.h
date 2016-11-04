@@ -21,7 +21,7 @@ namespace octet {
     void app_init() {
       app_scene =  new visual_scene();
       app_scene->create_default_camera_and_lights();
-      app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 4, 0));
+      app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 5, 0));
 
       material *red = new material(vec4(0.4f, 0, 0.4f, 1));
       material *green = new material(vec4(0, 1, 0, 1));
