@@ -100,19 +100,41 @@ namespace octet {
         hinges.push_back(app_scene->addHingeConstraint(*plankRB, *dangleRB, btVector3(0, -0.05f, 3.5f), btVector3(0, 0.75f, 0), btVector3(1, 1, 1), btVector3(1, 1, 1)));
 
       }
-
-
-
-
-
-
-
-
-
-
     }
 
     ~rope_bridge() {
     }
+
+    void set_spring_stiffness(float val) {
+      std::vector<btGeneric6DofSpringConstraint*>::iterator spring;
+      for (spring = springs.begin(); spring != springs.end(); ++spring) {
+        (*spring)->setStiffness(0, val);
+        (*spring)->setStiffness(1, val);
+        (*spring)->setStiffness(2, val);
+        (*spring)->setStiffness(3, val);
+        (*spring)->setStiffness(4, val);
+        (*spring)->setStiffness(5, val);
+      }
+    }
+
+    void set_spring_damping(float val) {
+      std::vector<btGeneric6DofSpringConstraint*>::iterator spring;
+      for (spring = springs.begin(); spring != springs.end(); ++spring) {
+        (*spring)->setDamping(0, val);
+        (*spring)->setDamping(1, val);
+        (*spring)->setDamping(2, val);
+        (*spring)->setDamping(3, val);
+        (*spring)->setDamping(4, val);
+        (*spring)->setDamping(5, val);
+      }
+    }
+
+    void set_spring_linear_upper_limit(btVector3 val) {
+      std::vector<btGeneric6DofSpringConstraint*>::iterator spring;
+      for (spring = springs.begin(); spring != springs.end(); ++spring) {
+        (*spring)->setLinearUpperLimit(val);
+      }
+    }
+
   };
 }
