@@ -103,8 +103,17 @@ namespace octet {
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 5, 0));
 
-      material *red = new material(vec4(0.4f, 0, 0.4f, 1));
+      // ground
+
       material *green = new material(vec4(0, 1, 0, 1));
+      mat4t mat;
+      mat.translate(0, -4, 0);
+      app_scene->add_shape(mat, new mesh_box(vec3(200, 1, 200)), green, false);
+
+      rope_bridge bridge(app_scene);
+      
+      /*
+      material *red = new material(vec4(0.4f, 0, 0.4f, 1));
       material *blue = new material(vec4(0, 0, 1, 1));
       material *brown = new material(vec4(1, 0.6f, 0, 1));
 
@@ -116,13 +125,9 @@ namespace octet {
       mat.translate(10, 0, 0);
       mesh_instance *rightAnchor = app_scene->add_shape(mat, new mesh_box(vec3(2, 4, 6)), red, false);
 
-      // ground
-      mat.loadIdentity();
-      mat.translate(0, -4, 0);
-      app_scene->add_shape(mat, new mesh_box(vec3(200, 1, 200)), green, false);
 
       load_spring_bridge(leftAnchor, rightAnchor);
-
+      */
     }
 
     /// this is called to draw the world

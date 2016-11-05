@@ -336,9 +336,10 @@ namespace octet { namespace scene {
 
     #ifdef OCTET_BULLET
 
-    void addHingeConstraint(btRigidBody& rbA, btRigidBody& rbB, const btVector3& pivotInA, const btVector3& pivotInB, btVector3& axisInA, btVector3& axisInB, bool useReferenceFrameA = false) {
+    btHingeConstraint* addHingeConstraint(btRigidBody& rbA, btRigidBody& rbB, const btVector3& pivotInA, const btVector3& pivotInB, btVector3& axisInA, btVector3& axisInB, bool useReferenceFrameA = false) {
       btHingeConstraint *hinge = new btHingeConstraint(rbA, rbB, pivotInA, pivotInB, axisInA, axisInB, useReferenceFrameA);
       world->addConstraint(hinge);
+      return hinge;
     }
 
     void addHingeConstraint(btRigidBody &body1, btVector3 &pivot, btVector3 &axis, const bool &useReferanceFrameA) {
@@ -346,7 +347,7 @@ namespace octet { namespace scene {
       world->addConstraint(hinge);
     }
 
-    void addSpringConstraint(btRigidBody &rbA, btRigidBody &rbB, const btTransform &frameInA, const btTransform &frameInB) {
+    btGeneric6DofSpringConstraint* addSpringConstraint(btRigidBody &rbA, btRigidBody &rbB, const btTransform &frameInA, const btTransform &frameInB) {
       btGeneric6DofSpringConstraint* spring = new btGeneric6DofSpringConstraint(rbA, rbB, frameInA, frameInB, true);
       spring->setLinearLowerLimit(btVector3(0, 0, 0));
       spring->setLinearUpperLimit(btVector3(0.2f, 0, 0));
@@ -355,7 +356,7 @@ namespace octet { namespace scene {
       spring->enableSpring(1, true);
       
       world->addConstraint(spring);
-      
+      return spring;
     }
     #endif // OCTET_BULLET
 
