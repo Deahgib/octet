@@ -11,37 +11,14 @@ namespace octet {
     // scene for drawing box
     ref<visual_scene> app_scene;
 
-    enum {
-      load_spring = 0,
-      load_hinge = 1
-    };
-
-    void load_hinge_bridge(mesh_instance* leftAnchor, mesh_instance* rightAnchor, material *color) {
-      mat4t mat;
-      mat.loadIdentity();
-      mat.translate(0, 8, 0);
-      mesh_instance *testCube1 = app_scene->add_shape(mat, new mesh_box(vec3(1, 1, 1)), color, false);
-
-      mat.loadIdentity();
-      mat.translate(2, 6, 0);
-      mesh_instance *testCube2 = app_scene->add_shape(mat, new mesh_box(vec3(1, 1, 1)), color, true);
-
-      btRigidBody *rbTestCube1 = testCube1->get_node()->get_rigid_body();
-      btRigidBody *rbTestCube2 = testCube2->get_node()->get_rigid_body();
-
-      app_scene->addHingeConstraint(*rbTestCube1, *rbTestCube2, 
-        btVector3(0, -2, 0), btVector3(-2, 0, 0), 
-        btVector3(0, 0, 1), btVector3(0, 0, 1));
-
-    }
-
-    void load_spring_bridge(mesh_instance* leftAnchor, mesh_instance* rightAnchor, material *color) {
+    void load_spring_bridge(mesh_instance* leftAnchor, mesh_instance* rightAnchor) {
+      material *brown = new material(vec4(1, 0.6f, 0, 1));
       mat4t mat;
       std::vector<mesh_instance*> plank_meshes;
       for (int i = 0; i < 10; ++i) {
         mat.loadIdentity();
-        mat.translate(-10 + (i * 2), 4, 0);
-        mesh_instance* temp = app_scene->add_shape(mat, new mesh_box(vec3(0.8f, 0.05f, 4)), color, true);
+        mat.translate(-7.4f + (i * 1.6f), 4, 0);
+        mesh_instance* temp = app_scene->add_shape(mat, new mesh_box(vec3(0.8f, 0.05f, 4)), brown, true);
         plank_meshes.push_back(temp);
       }
 
@@ -61,6 +38,7 @@ namespace octet {
         app_scene->addSpringConstraint(*rbLeft, *rbRight, localC, localD);
       }
 
+      // Tie up the bridge to the left anchor
       localA = btTransform::getIdentity();
       localA.setOrigin(get_btVector3(vec3(2, 4, 3.5f)));
       localB = btTransform::getIdentity();
@@ -69,12 +47,12 @@ namespace octet {
       localC.setOrigin(get_btVector3(vec3(2, 4, -3.5f)));
       localD = btTransform::getIdentity();
       localD.setOrigin(get_btVector3(vec3(-0.75f, 0, -3.5f)));
-
       btRigidBody *leftAnchorRB = leftAnchor->get_node()->get_rigid_body();
       btRigidBody *firstPlank = plank_meshes[0]->get_node()->get_rigid_body();
       app_scene->addSpringConstraint(*leftAnchorRB, *firstPlank, localA, localB);
       app_scene->addSpringConstraint(*leftAnchorRB, *firstPlank, localC, localD);
 
+      // Tie up the bridge to the right anchor
       localA = btTransform::getIdentity();
       localA.setOrigin(get_btVector3(vec3(0.75f, 0, 3.5f)));
       localB = btTransform::getIdentity();
@@ -83,11 +61,32 @@ namespace octet {
       localC.setOrigin(get_btVector3(vec3(0.75f, 0, -3.5f)));
       localD = btTransform::getIdentity();
       localD.setOrigin(get_btVector3(vec3(-2, 4, -3.5f)));
-
       btRigidBody *lastPlank = plank_meshes[plank_meshes.size() - 1]->get_node()->get_rigid_body();
       btRigidBody *rightAnchorRB = rightAnchor->get_node()->get_rigid_body();
       app_scene->addSpringConstraint(*lastPlank, *rightAnchorRB, localA, localB);
       app_scene->addSpringConstraint(*lastPlank, *rightAnchorRB, localC, localD);
+
+      // Now set up the dangling tastles.
+      std::vector<mesh_instance*> dangle_meshes;
+      for (int i = 0; i < 10; ++i) {
+        btRigidBody *plankRB = plank_meshes[i]->get_node()->get_rigid_body();
+
+        mat.loadIdentity();
+        mat.translate(-7.4f + (i * 1.6f), 3.5f, -3.5f);
+        mesh_instance *dangleMesh = app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 0.25f), brown, true, 0.2f);
+        btRigidBody *dangleRB = dangleMesh->get_node()->get_rigid_body();
+        app_scene->addHingeConstraint(*plankRB, *dangleRB, btVector3(0,-0.05f, -3.5f), btVector3(0, 0.75f, 0), btVector3(1,1,1), btVector3(1,1,1));
+
+        mat.loadIdentity();
+        mat.translate(-7.4f + (i * 1.6f), 3.5f, 3.5f);
+        dangleMesh = app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 0.25f), brown, true, 0.2f);
+        dangleRB = dangleMesh->get_node()->get_rigid_body();
+        app_scene->addHingeConstraint(*plankRB, *dangleRB, btVector3(0, -0.05f, 3.5f), btVector3(0, 0.75f, 0), btVector3(1, 1, 1), btVector3(1, 1, 1));
+        
+      }
+
+
+
     }
 
 
@@ -122,16 +121,8 @@ namespace octet {
       mat.translate(0, -4, 0);
       app_scene->add_shape(mat, new mesh_box(vec3(200, 1, 200)), green, false);
 
-      int bridge = load_spring;
-      switch (bridge)
-      {
-        case load_spring:
-          load_spring_bridge(leftAnchor, rightAnchor, brown);
-          break;
-        case load_hinge:
-          load_hinge_bridge(leftAnchor, rightAnchor, blue);
-          break;  
-      }
+      load_spring_bridge(leftAnchor, rightAnchor);
+
     }
 
     /// this is called to draw the world
@@ -140,7 +131,7 @@ namespace octet {
       get_viewport_size(vx, vy);
 
       if (is_key_going_up(key_space)) {
-        material *white = new material(vec4(0, 0.3f, 0, 1));
+        material *white = new material(vec4(1, 1, 1, 1));
         mat4t mat;
         mat.translate(7, 20, 0);
         app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), white, true);
