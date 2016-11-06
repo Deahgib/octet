@@ -35,7 +35,7 @@ namespace octet {
 
       rope_bridge bridge(app_scene);
 
-      bridge.set_spring_linear_upper_limit(btVector3(0.2f,0,0));
+      bridge.set_spring_linear_upper_limit(btVector3(0.02f,0,0));
 
     }
 
@@ -48,7 +48,7 @@ namespace octet {
         material *red = new material(vec4(1, 0, 0, 1));
         mat4t mat;
         mat.translate(7, 20, 0);
-        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true, 2);
+        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true);
         // Don't abuse! Those spheres will stick around in memory :D
       }
 
