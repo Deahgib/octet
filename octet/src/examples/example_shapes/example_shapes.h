@@ -5,11 +5,13 @@
 // Modular Framework for OpenGLES2 rendering on multiple platforms.
 //
 #include "rope_bridge.h"
+
 namespace octet {
   /// Scene containing a box with octet.
   class example_shapes : public app {
     // scene for drawing box
     ref<visual_scene> app_scene;
+    btGeneric6DofSpringConstraint* spring;
 
   public:
     example_shapes(int argc, char **argv) : app(argc, argv) {
@@ -46,7 +48,7 @@ namespace octet {
         material *red = new material(vec4(1, 0, 0, 1));
         mat4t mat;
         mat.translate(7, 20, 0);
-        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true);
+        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true, 2);
         // Don't abuse! Those spheres will stick around in memory :D
       }
 

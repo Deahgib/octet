@@ -336,23 +336,25 @@ namespace octet { namespace scene {
 
     #ifdef OCTET_BULLET
 
-    btHingeConstraint* addHingeConstraint(btRigidBody& rbA, btRigidBody& rbB, const btVector3& pivotInA, const btVector3& pivotInB, btVector3& axisInA, btVector3& axisInB, bool useReferenceFrameA = false) {
+    // Creates a hinge between two rigid bodies by specifing the local point of the pivot for each rigidbody, (and the axis in which we want the rotation to occur)
+    btHingeConstraint* addHingeConstraint(btRigidBody& rbA, btRigidBody& rbB, const btVector3& pivotInA, const btVector3& pivotInB, btVector3& axisInA, btVector3& axisInB, const bool &useReferenceFrameA = false) {
       btHingeConstraint *hinge = new btHingeConstraint(rbA, rbB, pivotInA, pivotInB, axisInA, axisInB, useReferenceFrameA);
       world->addConstraint(hinge);
       return hinge;
     }
 
-    void addHingeConstraint(btRigidBody &body1, btVector3 &pivot, btVector3 &axis, const bool &useReferanceFrameA) {
+    // Creates a hinge constraint between a single rigid body and an point in the scene.
+    void addHingeConstraint(btRigidBody &body1, btVector3 &pivot, btVector3 &axis, const bool &useReferanceFrameA = false) {
       btHingeConstraint *hinge = new btHingeConstraint(body1, pivot, axis, useReferanceFrameA);
       world->addConstraint(hinge);
     }
 
+    // Creates a spring constraint between two rigidbodies
     btGeneric6DofSpringConstraint* addSpringConstraint(btRigidBody &rbA, btRigidBody &rbB, const btTransform &frameInA, const btTransform &frameInB) {
       btGeneric6DofSpringConstraint* spring = new btGeneric6DofSpringConstraint(rbA, rbB, frameInA, frameInB, true);
       spring->setLinearLowerLimit(btVector3(0, 0, 0));
       spring->setLinearUpperLimit(btVector3(0.2f, 0, 0));
 
-      
       world->addConstraint(spring);
       return spring;
     }
