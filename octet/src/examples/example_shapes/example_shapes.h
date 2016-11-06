@@ -12,6 +12,39 @@ namespace octet {
     // scene for drawing box
     ref<visual_scene> app_scene;
     btGeneric6DofSpringConstraint* spring;
+    float test_ball_mass;
+
+    /*
+    Code taken from Andy Thomason on Github https://github.com/andy-thomason/read_a_csv_file/blob/master/main.cpp
+    */
+    std::vector<float> load_file() {
+      std::vector<float> masses;
+
+      std::ifstream is("masses.csv");
+
+      if (is.bad()) return std::vector<float>();
+
+      // store the line here
+      char buffer[2048];
+
+      // loop over lines
+      while (!is.eof()) {
+        is.getline(buffer, sizeof(buffer));
+
+        // loop over columns
+        char *b = buffer;
+        for (int col = 0; ; ++col) {
+          char *e = b;
+          while (*e != 0 && *e != ',') ++e;
+
+          masses.push_back(std::atof(b));
+
+          if (*e != ',') break;
+          b = e + 1;
+        }
+      }
+      return masses;
+    }
 
   public:
     example_shapes(int argc, char **argv) : app(argc, argv) {
@@ -24,7 +57,11 @@ namespace octet {
     void app_init() {
       app_scene =  new visual_scene();
       app_scene->create_default_camera_and_lights();
-      app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 5, 0));
+      app_scene->get_camera_instance(0)->get_node()->translate(vec3(0, 4, 0));
+
+      std::vector<float> masses = load_file();
+      if (masses.empty()) return;
+      test_ball_mass = masses[2];
 
       // ground
       material *green = new material(vec4(0, 1, 0, 1));
@@ -32,8 +69,8 @@ namespace octet {
       mat.translate(0, -4, 0);
       app_scene->add_shape(mat, new mesh_box(vec3(200, 1, 200)), green, false);
 
-
-      rope_bridge bridge(app_scene);
+      // Create a ropebridge object
+      rope_bridge bridge(app_scene, masses);
 
       bridge.set_spring_linear_upper_limit(btVector3(0.02f,0,0));
 

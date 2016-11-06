@@ -7,9 +7,13 @@ namespace octet {
     std::vector<btGeneric6DofSpringConstraint*> springs;
     std::vector<btHingeConstraint*> hinges;
 
+    float plank_mass, bauble_mass;
+
   public:
-    rope_bridge(ref<visual_scene> root){
+    rope_bridge(ref<visual_scene> root, std::vector<float> masses){
       app_scene = root;
+      plank_mass = masses[0];
+      bauble_mass = masses[1];
 
       material *red = new material(vec4(1, 0, 0, 1));
       material *green = new material(vec4(0, 1, 0, 1));
@@ -28,7 +32,7 @@ namespace octet {
       for (int i = 0; i < 10; ++i) {
         mat.loadIdentity();
         mat.translate(-7.4f + (i * 1.6f), 4, 0);
-        mesh_instance* temp = app_scene->add_shape(mat, new mesh_box(vec3(0.8f, 0.05f, 4)), brown, true, 0.5f);
+        mesh_instance* temp = app_scene->add_shape(mat, new mesh_box(vec3(0.8f, 0.05f, 4)), brown, true, plank_mass);
         plank_meshes.push_back(temp);
       }
       
@@ -97,13 +101,13 @@ namespace octet {
 
         mat.loadIdentity();
         mat.translate(-7.4f + (i * 1.6f), 3.5f, -3.5f);
-        mesh_instance *dangleMesh = app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 0.25f), ((i%2 == 1) ? red : green) , true, 0.05f);
+        mesh_instance *dangleMesh = app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 0.25f), ((i%2 == 1) ? red : green) , true, bauble_mass);
         btRigidBody *dangleRB = dangleMesh->get_node()->get_rigid_body();
         hinges.push_back(app_scene->addHingeConstraint(*plankRB, *dangleRB, btVector3(0, -0.05f, -3.5f), btVector3(0, 0.75f, 0), btVector3(1, 1, 1), btVector3(1, 1, 1)));
 
         mat.loadIdentity();
         mat.translate(-7.4f + (i * 1.6f), 3.5f, 3.5f);
-        dangleMesh = app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 0.25f), ((i % 2 == 1) ? green : red), true, 0.05f);
+        dangleMesh = app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 0.25f), ((i % 2 == 1) ? green : red), true, bauble_mass);
         dangleRB = dangleMesh->get_node()->get_rigid_body();
         hinges.push_back(app_scene->addHingeConstraint(*plankRB, *dangleRB, btVector3(0, -0.05f, 3.5f), btVector3(0, 0.5f, 0), btVector3(1, 1, 1), btVector3(1, 1, 1)));
 
