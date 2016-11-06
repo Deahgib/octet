@@ -7,6 +7,8 @@ Tank Game
  *[Escape of the Runaway Tank (working title)]*
  Intro to Game programming, Assignment 1
  by ***Louis Bennette*** , id: lbenn004
+ 
+ Video: https://youtu.be/-xZ5i3ghtQs
 
 I decided that I would like to turn the space invaders game into an endless scrolling tank game.
 Enemies come into play from the right of the screen and make their way to the left of the screen. If an enemy makes it all the way across the screen the player will lose a life. When the player runs out of lives the game is over. When the player hits an enemy they gain some points.
