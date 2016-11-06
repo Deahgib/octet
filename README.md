@@ -1,3 +1,15 @@
+Louis Bennette's octet repo.
+I've split the assignments into seperate branches.
+
+Introduction to Game Programming:
+  Assignment 1 : https://github.com/Deahgib/octet/tree/assignment1  (Tank Game)
+
+Tools & Middleware:
+  Assignment 1 : https://github.com/Deahgib/octet/tree/rope-bridge  (Rope Bridge)
+
+
+----------------------
+
 # octet
 
 Octet is a framework for teaching OpenGL and the rudiments of game programming such
