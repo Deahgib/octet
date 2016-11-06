@@ -43,10 +43,10 @@ namespace octet {
       get_viewport_size(vx, vy);
 
       if (is_key_going_up(key_space)) {
-        material *white = new material(vec4(1, 1, 1, 1));
+        material *red = new material(vec4(1, 0, 0, 1));
         mat4t mat;
         mat.translate(7, 20, 0);
-        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), white, true);
+        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true);
         // Don't abuse! Those spheres will stick around in memory :D
       }
 

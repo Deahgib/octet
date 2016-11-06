@@ -37,7 +37,7 @@ namespace octet {
         mesh_instance* temp = app_scene->add_shape(mat, new mesh_box(vec3(0.8f, 0.05f, 4)), brown, true);
         plank_meshes.push_back(temp);
       }
-
+      /*
       btTransform localA = btTransform::getIdentity();
       localA.setOrigin(get_btVector3(vec3(0.75f, 0, 3.5f)));
       btTransform localB = btTransform::getIdentity();
@@ -46,15 +46,22 @@ namespace octet {
       localC.setOrigin(get_btVector3(vec3(0.75f, 0, -3.5f)));
       btTransform localD = btTransform::getIdentity();
       localD.setOrigin(get_btVector3(vec3(-0.75f, 0, -3.5f)));
+      */
       // Tie up all the planks left to right and save the spring connections in the springs vector.
       for (int i = 0; i < 9; ++i) {
         btRigidBody* rbLeft = plank_meshes[i]->get_node()->get_rigid_body();
         btRigidBody* rbRight = plank_meshes[i + 1]->get_node()->get_rigid_body();
-        springs.push_back(app_scene->addSpringConstraint(*rbLeft, *rbRight, localA, localB));
-        springs.push_back(app_scene->addSpringConstraint(*rbLeft, *rbRight, localC, localD));
+        //springs.push_back(app_scene->addSpringConstraint(*rbLeft, *rbRight, localA, localB));
+        //springs.push_back(app_scene->addSpringConstraint(*rbLeft, *rbRight, localC, localD));
+
+        hinges.push_back(app_scene->addHingeConstraint(*rbLeft, *rbRight, btVector3(0.8f, 0, 3.5f), btVector3(-0.8f, 0, 3.5f), btVector3(0, 0, 1), btVector3(0, 0, 1)));
+        hinges.push_back(app_scene->addHingeConstraint(*rbLeft, *rbRight, btVector3(0.8f, 0, -3.5f), btVector3(-0.8f, 0, -3.5f), btVector3(0, 0, 1), btVector3(0, 0, 1)));
       }
 
       // Tie up the bridge to the left anchor
+      btRigidBody *leftAnchorRB = leftAnchor->get_node()->get_rigid_body();
+      btRigidBody *firstPlank = plank_meshes[0]->get_node()->get_rigid_body();
+      /*
       localA = btTransform::getIdentity();
       localA.setOrigin(get_btVector3(vec3(2, 4, 3.5f)));
       localB = btTransform::getIdentity();
@@ -63,12 +70,17 @@ namespace octet {
       localC.setOrigin(get_btVector3(vec3(2, 4, -3.5f)));
       localD = btTransform::getIdentity();
       localD.setOrigin(get_btVector3(vec3(-0.75f, 0, -3.5f)));
-      btRigidBody *leftAnchorRB = leftAnchor->get_node()->get_rigid_body();
-      btRigidBody *firstPlank = plank_meshes[0]->get_node()->get_rigid_body();
       springs.push_back(app_scene->addSpringConstraint(*leftAnchorRB, *firstPlank, localA, localB));
       springs.push_back(app_scene->addSpringConstraint(*leftAnchorRB, *firstPlank, localC, localD));
+      */
+      hinges.push_back(app_scene->addHingeConstraint(*leftAnchorRB, *firstPlank, btVector3(2.2f, 4, 3.5f), btVector3(-0.9f, 0, 3.5f), btVector3(0, 0, 1), btVector3(0, 0, 1)));
+      hinges.push_back(app_scene->addHingeConstraint(*leftAnchorRB, *firstPlank, btVector3(2.2f, 4, -3.5f), btVector3(-0.9f, 0, -3.5f), btVector3(0, 0, 1), btVector3(0, 0, 1)));
+
 
       // Tie up the bridge to the right anchor
+      btRigidBody *lastPlank = plank_meshes[plank_meshes.size() - 1]->get_node()->get_rigid_body();
+      btRigidBody *rightAnchorRB = rightAnchor->get_node()->get_rigid_body();
+      /*
       localA = btTransform::getIdentity();
       localA.setOrigin(get_btVector3(vec3(0.75f, 0, 3.5f)));
       localB = btTransform::getIdentity();
@@ -77,10 +89,11 @@ namespace octet {
       localC.setOrigin(get_btVector3(vec3(0.75f, 0, -3.5f)));
       localD = btTransform::getIdentity();
       localD.setOrigin(get_btVector3(vec3(-2, 4, -3.5f)));
-      btRigidBody *lastPlank = plank_meshes[plank_meshes.size() - 1]->get_node()->get_rigid_body();
-      btRigidBody *rightAnchorRB = rightAnchor->get_node()->get_rigid_body();
       springs.push_back(app_scene->addSpringConstraint(*lastPlank, *rightAnchorRB, localA, localB));
       springs.push_back(app_scene->addSpringConstraint(*lastPlank, *rightAnchorRB, localC, localD));
+      */
+      hinges.push_back(app_scene->addHingeConstraint(*lastPlank, *rightAnchorRB, btVector3(0.9f, 0, 3.5f), btVector3(-2.2f, 4, 3.5f), btVector3(0, 0, 1), btVector3(0, 0, 1)));
+      hinges.push_back(app_scene->addHingeConstraint(*lastPlank, *rightAnchorRB, btVector3(0.9f, 0, -3.5f), btVector3(-2.2f, 4, -3.5f), btVector3(0, 0, 1), btVector3(0, 0, 1)));
 
       // Now set up the dangling tastles.
       std::vector<mesh_instance*> dangle_meshes;
