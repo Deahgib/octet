@@ -85,7 +85,7 @@ namespace octet {
         material *red = new material(vec4(1, 0, 0, 1));
         mat4t mat;
         mat.translate(7, 20, 0);
-        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true);
+        app_scene->add_shape(mat, new mesh_sphere(vec3(1, 1, 1), 1), red, true, test_ball_mass);
         // Don't abuse! Those spheres will stick around in memory :D
       }
 
