@@ -6,7 +6,7 @@ Rope Bridge
 Tools & Middleware, Assignment 1. By, **Louis Bennette**.  Id: lbenn004
 
 
-Video: LINK
+Video: https://youtu.be/0lu2ozDIwPk
 
 
 **The bridge:**
