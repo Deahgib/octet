@@ -33,7 +33,7 @@ Note, the spring can stretch further as it’s a soft constraint meaning that it
 
 
 Below is a representation of the springs (in blue) between the planks of the bridge.
-
+![Highlighted Spring Constraints](https://raw.githubusercontent.com/Deahgib/octet/rope-bridge/octet/assets/rope-bridge/rope-bridge-springs.png)
 
 **Hinges:**
 To demonstrate how hinge constraints could be used, I added decorations in the form of small spheres or baubles on the bridge.
@@ -49,7 +49,7 @@ Note, the hinges are also soft constraints and can be stretched aswell by outsid
 
 Below is an image of where the hinge point is (in blue) for a single bauble.
 
-
+![Highlighted hinge constraint](https://raw.githubusercontent.com/Deahgib/octet/rope-bridge/octet/assets/rope-bridge/rope-bridge-hinges.png)
 
 
 **Drop test:**
