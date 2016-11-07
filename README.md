@@ -11,7 +11,6 @@ Video: https://youtu.be/0lu2ozDIwPk
 
 **The bridge:**
 
-
 I have created a rope bridge using primitive meshes and bullet3 constraints. 
 Specifically, I tested my bridge using the btGeneric6DofSpringConstraint and the btHingeConstraint object provided by bullet3. I learnt how to implement these thanks to this online document http://bulletphysics.org/mediawiki-1.5.8/index.php/Constraints 
 
@@ -20,6 +19,7 @@ I started to make a bridge using thin rectangle boxes as planks. In order for th
 
 
 **Springs:**
+
 A spring constraint requires two rigid bodies and two points where the ends of the spring attach to the rigid bodies. Here the rigidbodies are the planks and the anchors. And the points are btVector3 objects representing a local point in each rigidbody.
 See, http://bulletphysics.org/Bullet/BulletFull/classbtGeneric6DofSpringConstraint.html 
 
@@ -36,6 +36,7 @@ Below is a representation of the springs (in blue) between the planks of the bri
 ![Highlighted Spring Constraints](https://raw.githubusercontent.com/Deahgib/octet/rope-bridge/octet/assets/rope-bridge/rope-bridge-springs.png)
 
 **Hinges:**
+
 To demonstrate how hinge constraints could be used, I added decorations in the form of small spheres or baubles on the bridge.
 I used the btHingeConstraint to tie the baubles to the planks . There are two types of hinges. The simple of the two requires a rigid body, a pivot point and an axis along which the rotation will happen. This isn’t useful for our purposes but was a good exercise to test. (Implemented in an earlier commit)
 The other type of hinge requires, much like the spring constraint, two rigidbodies, local points for the pivot in each rigid body and additionally two axes around which the pivot will occur.
@@ -53,6 +54,7 @@ Below is an image of where the hinge point is (in blue) for a single bauble.
 
 
 **Drop test:**
+
 To test if the bridge reacts properly to other objects on top of it, I simply drop a sphere onto the bridge when the user presses ‘space’. The sphere lands on one end of the bridge and the geometry of the bridge makes the ball roll all the way across. 
 
 
@@ -66,6 +68,7 @@ The default file is as follows: `0.5,0.05,1`
 These three values are used to set the weights of each plank, each bauble and each dropping ball respectively. If the user wishes to test the elasticity of the bridge they can make the dropping ball weight higher.
 
 ***Basic overview of how bullet3 works in octet:***
+
 If bullet3 is enabled for an octet app the physical world is set up when when a visual_scene object is initialised.
 The following bullet code is executed (Taken from the constructor in visual_scene.h):
     
